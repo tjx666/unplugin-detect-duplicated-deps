@@ -1,0 +1,13 @@
+{
+    "name": "app",
+    "scripts": {
+        "build": "vite build"
+    },
+    "dependencies": {
+        "pkg1": "workspace:*",
+        "pkg2": "workspace:*"
+    },
+    "devDependencies": {
+        "vite": "4.3.9"
+    }
+}

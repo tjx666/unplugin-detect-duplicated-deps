@@ -1,22 +1,19 @@
 {
-    "name": "unplugin-starter",
+    "name": "unplugin-detect-duplicated-deps",
     "version": "0.0.0",
     "description": "Description.",
     "keywords": [
         "unplugin",
-        "rollup",
-        "vite",
-        "esbuild",
-        "webpack"
+        "vite"
     ],
     "license": "MIT",
-    "homepage": "https://github.com/tjx666/unplugin-starter#readme",
+    "homepage": "https://github.com/tjx666/unplugin-detect-duplicated-deps#readme",
     "bugs": {
-        "url": "https://github.com/tjx666/unplugin-starter/issues"
+        "url": "https://github.com/tjx666/unplugin-detect-duplicated-deps/issues"
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/tjx666/unplugin-starter.git"
+        "url": "git+https://github.com/tjx666/unplugin-detect-duplicated-deps.git"
     },
     "author": "YuTengjing <ytj2713151713@gmail.com>",
     "files": [
@@ -38,33 +35,17 @@
             "types": "./dist/vite.d.ts",
             "require": "./dist/vite.js",
             "import": "./dist/vite.mjs"
-        },
-        "./webpack": {
-            "types": "./dist/webpack.d.ts",
-            "require": "./dist/webpack.js",
-            "import": "./dist/webpack.mjs"
-        },
-        "./rollup": {
-            "types": "./dist/rollup.d.ts",
-            "require": "./dist/rollup.js",
-            "import": "./dist/rollup.mjs"
-        },
-        "./esbuild": {
-            "types": "./dist/esbuild.d.ts",
-            "require": "./dist/esbuild.js",
-            "import": "./dist/esbuild.mjs"
-        },
-        "./*": "./*"
+        }
     },
     "typesVersions": {
-        "<=4.9": {
+        "*": {
             "*": [
-                "./dist/*",
-                "./*"
+                "./dist/*"
             ]
         }
     },
     "publishConfig": {
+        "registry": "https://registry.npmjs.org/",
         "access": "public"
     },
     "scripts": {
@@ -72,17 +53,25 @@
         "lint:fix": "pnpm run lint --fix",
         "build": "tsup && tsx scripts/postbuild.mts",
         "dev": "tsup --watch",
-        "test": "vitest",
+        "test": "pnpm build && pnpm --filter app build",
         "release": "bumpp && pnpm publish",
         "prepublishOnly": "pnpm run build"
     },
+    "peerDependencies": {
+        "vite": "^4.3"
+    },
     "dependencies": {
-        "@rollup/pluginutils": "^5.0.2",
+        "consola": "^3.1.0",
         "magic-string": "^0.30.0",
-        "unplugin": "^1.3.1"
+        "p-memoize": "^7.1.1",
+        "picocolors": "^1.0.0",
+        "semver": "^7.5.1",
+        "unplugin": "^1.3.1",
+        "workspace-root": "^2.5.1"
     },
     "devDependencies": {
         "@types/node": "^18.16.16",
+        "@types/semver": "^7.5.0",
         "@yutengjing/eslint-config-typescript": "^0.4.1",
         "@yutengjing/prettier-config": "^0.0.1",
         "bumpp": "^9.1.0",

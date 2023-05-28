@@ -1,0 +1,7 @@
+{
+    "name": "pkg2",
+    "main": "index.js",
+    "dependencies": {
+        "axios": "^0.27.2"
+    }
+}

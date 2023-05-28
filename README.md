@@ -1,83 +1,25 @@
-# unplugin-starter [![npm](https://img.shields.io/npm/v/unplugin.svg)](https://npmjs.com/package/unplugin)
+# unplugin-detect-duplicated-deps [![npm](https://img.shields.io/npm/v/unplugin.svg)](https://npmjs.com/package/unplugin)
 
-[![Unit Test](https://github.com/tjx666/unplugin-starter/actions/workflows/unit-test.yml/badge.svg)](https://github.com/tjx666/unplugin-starter/actions/workflows/unit-test.yml)
+[![Unit Test](https://github.com/tjx666/unplugin-detect-duplicated-deps/actions/workflows/unit-test.yml/badge.svg)](https://github.com/tjx666/unplugin-detect-duplicated-deps/actions/workflows/unit-test.yml)
 
-Starter template for [unplugin](https://github.com/unjs/unplugin).
+check the duplicated dependencies
+
+![effect](docs/effect.png)
 
 ## Installation
 
 ```bash
-npm i -D unplugin-starter
+npm i -D unplugin-detect-duplicated-deps
 ```
-
-<details>
-<summary>Vite</summary><br>
 
 ```ts
 // vite.config.ts
-import UnpluginStarter from 'unplugin-starter/vite';
+import UnpluginDetectDuplicatedDeps from 'unplugin-detect-duplicated-deps/vite';
 
 export default defineConfig({
-  plugins: [UnpluginStarter()],
+  plugins: [UnpluginDetectDuplicatedDeps()],
 });
 ```
-
-<br></details>
-
-<details>
-<summary>Rollup</summary><br>
-
-```ts
-// rollup.config.js
-import UnpluginStarter from 'unplugin-starter/rollup';
-
-export default {
-  plugins: [UnpluginStarter()],
-};
-```
-
-<br></details>
-
-<details>
-<summary>esbuild</summary><br>
-
-```ts
-// esbuild.config.js
-import { build } from 'esbuild';
-
-build({
-  plugins: [require('unplugin-starter/esbuild')()],
-});
-```
-
-<br></details>
-
-<details>
-<summary>Webpack</summary><br>
-
-```ts
-// webpack.config.js
-module.exports = {
-  /* ... */
-  plugins: [require('unplugin-starter/webpack')()],
-};
-```
-
-<br></details>
-
-<details>
-<summary>Vue CLI</summary><br>
-
-```ts
-// vue.config.js
-module.exports = {
-  configureWebpack: {
-    plugins: [require('unplugin-starter/webpack')()],
-  },
-};
-```
-
-<br></details>
 
 ## License
 
