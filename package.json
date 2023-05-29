@@ -1,7 +1,7 @@
 {
     "name": "unplugin-detect-duplicated-deps",
     "version": "0.0.1",
-    "description": "Description.",
+    "description": "Detect duplicate packaged dependencies",
     "keywords": [
         "unplugin",
         "rollup",

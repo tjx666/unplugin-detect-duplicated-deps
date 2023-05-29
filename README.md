@@ -45,6 +45,12 @@ export default {
 
 <br></details>
 
+## Related Projects
+
+- [duplicate-package-checker-webpack-plugin](https://github.com/darrenscerri/duplicate-package-checker-webpack-plugin)
+- [unplugin](https://github.com/unjs/unplugin)
+- [unplugin-starter](https://github.com/sxzz/unplugin-starter)
+
 ## License
 
 [MIT](./LICENSE) License © 2023-PRESENT [YuTengjing](https://github.com/tjx666)
