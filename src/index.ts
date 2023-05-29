@@ -11,11 +11,20 @@ import { workspaceRoot } from 'workspace-root';
 
 export interface Options {}
 
-const workspaceRootFolder = await workspaceRoot();
+/**
+ * D:\a\unplugin-detect-duplicated-deps => D:/a/unplugin-detect-duplicated-deps
+ */
+function convertWindowsPathToPosix(path: string) {
+    return path.replaceAll('\\', '/');
+}
 
-console.log('workspaceRootFolder:', workspaceRootFolder);
+let workspaceRootFolder = await workspaceRoot();
+if (workspaceRootFolder) {
+    workspaceRootFolder = convertWindowsPathToPosix(workspaceRootFolder);
+}
 
 function parsePackageNameFromModulePath(id: string) {
+    id = convertWindowsPathToPosix(id);
     const packageNameRegex = /.*\/node_modules\/((?:@[^/]+\/)?[^/]+)/;
     const match = id.match(packageNameRegex);
     const packageName = match ? match[1] : id;
@@ -26,6 +35,7 @@ function parsePackageNameFromModulePath(id: string) {
 }
 
 const getPackageInfo = pMemoize(async (id: string) => {
+    id = convertWindowsPathToPosix(id);
     const packagePathRegex = /.*\/node_modules\/(?:@[^/]+\/)?[^/]+/;
     const match = id.match(packagePathRegex);
     if (match) {
@@ -88,8 +98,10 @@ export default createUnplugin<Options | undefined>(() => {
     };
 
     const buildEnd: RollupPlugin['buildEnd'] = function () {
-        console.log('packageToVersionsMap:');
-        console.dir(packageToVersionsMap);
+        setTimeout(() => {
+            console.log('packageToVersionsMap:');
+            console.dir(packageToVersionsMap);
+        }, 2000);
 
         const duplicatedPackages: string[] = [];
         for (const [packageName, versionsMap] of packageToVersionsMap.entries()) {
