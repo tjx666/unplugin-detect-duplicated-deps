@@ -1,7 +1,9 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { normalizePath } from '@rollup/pluginutils';
 import consola from 'consola';
+import mem from 'mem';
 import pMemoize from 'p-memoize';
 import c from 'picocolors';
 import { gt } from 'semver';
@@ -11,20 +13,13 @@ import { workspaceRoot } from 'workspace-root';
 
 export interface Options {}
 
-/**
- * D:\a\unplugin-detect-duplicated-deps => D:/a/unplugin-detect-duplicated-deps
- */
-function convertWindowsPathToPosix(path: string) {
-    return path.replaceAll('\\', '/');
-}
-
 let workspaceRootFolder = await workspaceRoot();
 if (workspaceRootFolder) {
-    workspaceRootFolder = convertWindowsPathToPosix(workspaceRootFolder);
+    workspaceRootFolder = normalizePath(workspaceRootFolder);
 }
 
-function parsePackageNameFromModulePath(id: string) {
-    id = convertWindowsPathToPosix(id);
+const parsePackageNameFromModulePath = mem((id: string) => {
+    id = normalizePath(id);
     const packageNameRegex = /.*\/node_modules\/((?:@[^/]+\/)?[^/]+)/;
     const match = id.match(packageNameRegex);
     const packageName = match ? match[1] : id;
@@ -32,10 +27,10 @@ function parsePackageNameFromModulePath(id: string) {
         return packageName.slice(workspaceRootFolder.length + 1);
     }
     return packageName;
-}
+});
 
 const getPackageInfo = pMemoize(async (id: string) => {
-    id = convertWindowsPathToPosix(id);
+    id = normalizePath(id);
     const packagePathRegex = /.*\/node_modules\/(?:@[^/]+\/)?[^/]+/;
     const match = id.match(packagePathRegex);
     if (match) {
@@ -56,9 +51,10 @@ const getPackageInfo = pMemoize(async (id: string) => {
 export default createUnplugin<Options | undefined>(() => {
     const name = 'unplugin-detect-duplicated-deps';
     /**
-     * Map{
-     *   'axios': Map{
-     *     '0.0.1': Set['tests/fixtures/mono/packages/pkg2/index.js', 'axios-mock-adapter']
+     * Map(1) {
+     *   'axios' => Map(2) {
+     *     '1.4.0' => Set(2) { 'tests/fixtures/mono/packages/pkg1/index.js', 'axios' },
+     *     '0.27.2' => Set(2) { 'tests/fixtures/mono/packages/pkg2/index.js', 'axios' }
      *   }
      * }
      */
@@ -98,11 +94,6 @@ export default createUnplugin<Options | undefined>(() => {
     };
 
     const buildEnd: RollupPlugin['buildEnd'] = function () {
-        setTimeout(() => {
-            console.log('packageToVersionsMap:');
-            console.dir(packageToVersionsMap);
-        }, 2000);
-
         const duplicatedPackages: string[] = [];
         for (const [packageName, versionsMap] of packageToVersionsMap.entries()) {
             if (versionsMap.size > 1) {
@@ -146,6 +137,9 @@ export default createUnplugin<Options | undefined>(() => {
                 warningMessages.push(`    - ${formattedVersion} imported by ${formattedImporters}`);
             }
         }
+        // remove vite output dim colorize
+        // eslint-disable-next-line unicorn/escape-case, unicorn/no-hex-escape
+        process.stdout.write('\x1b[0m');
         consola.warn(warningMessages.join('\n'));
     };
 
