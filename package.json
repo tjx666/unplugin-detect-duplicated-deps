@@ -4,6 +4,7 @@
     "description": "Description.",
     "keywords": [
         "unplugin",
+        "rollup",
         "vite"
     ],
     "license": "MIT",
@@ -35,6 +36,11 @@
             "types": "./dist/vite.d.ts",
             "require": "./dist/vite.js",
             "import": "./dist/vite.mjs"
+        },
+        "./rollup": {
+            "types": "./dist/rollup.d.ts",
+            "require": "./dist/rollup.js",
+            "import": "./dist/rollup.mjs"
         }
     },
     "typesVersions": {

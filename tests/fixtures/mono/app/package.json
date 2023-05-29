@@ -1,13 +1,21 @@
 {
     "name": "app",
     "scripts": {
-        "build": "vite build"
+        "clean": "rimraf -rf dist",
+        "build:vite": "pnpm clean && vite build",
+        "build:rollup": "pnpm clean && rollup -c",
+        "build": "pnpm build:vite && pnpm build:rollup"
     },
     "dependencies": {
         "pkg1": "workspace:*",
         "pkg2": "workspace:*"
     },
     "devDependencies": {
-        "vite": "4.3.9"
+        "@rollup/plugin-commonjs": "^25.0.0",
+        "@rollup/plugin-json": "^6.0.0",
+        "@rollup/plugin-node-resolve": "^15.0.2",
+        "rimraf": "^5.0.1",
+        "rollup": "^3.23.0",
+        "vite": "^4.3.9"
     }
 }

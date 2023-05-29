@@ -17,6 +17,9 @@ npm i -D unplugin-detect-duplicated-deps
 
 ## Usage
 
+<details>
+<summary>Vite</summary><br>
+
 ```ts
 // vite.config.ts
 import UnpluginDetectDuplicatedDeps from 'unplugin-detect-duplicated-deps/vite';
@@ -25,6 +28,22 @@ export default defineConfig({
   plugins: [UnpluginDetectDuplicatedDeps()],
 });
 ```
+
+<br></details>
+
+<details>
+<summary>Rollup</summary><br>
+
+```ts
+// rollup.config.js
+import UnpluginDetectDuplicatedDeps from 'unplugin-detect-duplicated-deps/rollup';
+
+export default {
+  plugins: [UnpluginDetectDuplicatedDeps()],
+};
+```
+
+<br></details>
 
 ## License
 
