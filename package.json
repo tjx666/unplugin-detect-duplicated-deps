@@ -1,6 +1,6 @@
 {
     "name": "unplugin-detect-duplicated-deps",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Detect duplicate packaged dependencies",
     "keywords": [
         "unplugin",
@@ -67,7 +67,9 @@
         "vite": "^4.3"
     },
     "dependencies": {
+        "@rollup/pluginutils": "^5.0.2",
         "consola": "^3.1.0",
+        "mem": "^9.0.2",
         "p-memoize": "^7.1.1",
         "picocolors": "^1.0.0",
         "semver": "^7.5.1",

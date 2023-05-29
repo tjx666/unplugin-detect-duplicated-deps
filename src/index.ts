@@ -1,7 +1,9 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { normalizePath } from '@rollup/pluginutils';
 import consola from 'consola';
+import mem from 'mem';
 import pMemoize from 'p-memoize';
 import c from 'picocolors';
 import { gt } from 'semver';
@@ -11,9 +13,13 @@ import { workspaceRoot } from 'workspace-root';
 
 export interface Options {}
 
-const workspaceRootFolder = await workspaceRoot();
+let workspaceRootFolder = await workspaceRoot();
+if (workspaceRootFolder) {
+    workspaceRootFolder = normalizePath(workspaceRootFolder);
+}
 
-function parsePackageNameFromModulePath(id: string) {
+const parsePackageNameFromModulePath = mem((id: string) => {
+    id = normalizePath(id);
     const packageNameRegex = /.*\/node_modules\/((?:@[^/]+\/)?[^/]+)/;
     const match = id.match(packageNameRegex);
     const packageName = match ? match[1] : id;
@@ -21,9 +27,10 @@ function parsePackageNameFromModulePath(id: string) {
         return packageName.slice(workspaceRootFolder.length + 1);
     }
     return packageName;
-}
+});
 
 const getPackageInfo = pMemoize(async (id: string) => {
+    id = normalizePath(id);
     const packagePathRegex = /.*\/node_modules\/(?:@[^/]+\/)?[^/]+/;
     const match = id.match(packagePathRegex);
     if (match) {
@@ -43,10 +50,13 @@ const getPackageInfo = pMemoize(async (id: string) => {
 
 export default createUnplugin<Options | undefined>(() => {
     const name = 'unplugin-detect-duplicated-deps';
+    let isVitePlugin = false;
+
     /**
-     * Map{
-     *   'axios': Map{
-     *     '0.0.1': Set['tests/fixtures/mono/packages/pkg2/index.js', 'axios-mock-adapter']
+     * Map(1) {
+     *   'axios' => Map(2) {
+     *     '1.4.0' => Set(2) { 'tests/fixtures/mono/packages/pkg1/index.js', 'axios' },
+     *     '0.27.2' => Set(2) { 'tests/fixtures/mono/packages/pkg2/index.js', 'axios' }
      *   }
      * }
      */
@@ -85,58 +95,69 @@ export default createUnplugin<Options | undefined>(() => {
         }
     };
 
+    const buildEnd: RollupPlugin['buildEnd'] = function () {
+        const duplicatedPackages: string[] = [];
+        for (const [packageName, versionsMap] of packageToVersionsMap.entries()) {
+            if (versionsMap.size > 1) {
+                duplicatedPackages.push(packageName);
+            }
+        }
+        if (duplicatedPackages.length === 0) return;
+
+        const formattedDuplicatedPackageNames = duplicatedPackages
+            .map((name) => c.magenta(name))
+            .join(', ');
+        const warningMessages = [
+            `multiple versions of ${formattedDuplicatedPackageNames} is bundled!`,
+        ];
+
+        for (const duplicatedPackage of duplicatedPackages) {
+            warningMessages.push(`\n  ${c.magenta(duplicatedPackage)}:`);
+
+            const sortedVersions = [...packageToVersionsMap.get(duplicatedPackage)!.keys()].sort(
+                (a, b) => (gt(a, b) ? 1 : -1),
+            );
+
+            let longestVersionLength = Number.NEGATIVE_INFINITY;
+            sortedVersions.forEach((v) => {
+                if (v.length > longestVersionLength) {
+                    longestVersionLength = v.length;
+                }
+            });
+
+            for (const version of sortedVersions) {
+                const importers = Array.from(
+                    packageToVersionsMap.get(duplicatedPackage)!.get(version)!,
+                );
+                const formattedVersion = c.bold(
+                    c.yellow(version.padEnd(longestVersionLength, ' ')),
+                );
+                const formattedImporters = importers
+                    .filter((name) => name !== duplicatedPackage)
+                    .map((name) => c.green(name))
+                    .join(', ');
+                warningMessages.push(`    - ${formattedVersion} imported by ${formattedImporters}`);
+            }
+        }
+        // remove vite output dim colorize
+        // eslint-disable-next-line unicorn/escape-case, unicorn/no-hex-escape
+        process.stdout.write(`\x1b[0m${isVitePlugin ? '\n' : ''}`);
+        consola.warn(warningMessages.join('\n'));
+    };
+
     return {
         name,
         vite: {
             enforce: 'pre',
+            config() {
+                isVitePlugin = true;
+            },
             resolveId,
+            buildEnd,
         },
         rollup: {
             resolveId,
-        },
-        buildEnd() {
-            const duplicatedPackages: string[] = [];
-            for (const [packageName, versionsMap] of packageToVersionsMap.entries()) {
-                if (versionsMap.size > 1) {
-                    duplicatedPackages.push(packageName);
-                }
-            }
-            if (duplicatedPackages.length === 0) return;
-
-            const formattedDuplicatedPackageNames = duplicatedPackages
-                .map((name) => c.magenta(name))
-                .join(', ');
-            consola.warn(`multiple versions of ${formattedDuplicatedPackageNames} is bundled!`);
-
-            for (const duplicatedPackage of duplicatedPackages) {
-                console.warn(`  ${c.magenta(duplicatedPackage)}:`);
-
-                const sortedVersions = [
-                    ...packageToVersionsMap.get(duplicatedPackage)!.keys(),
-                ].sort((a, b) => (gt(a, b) ? 1 : -1));
-
-                let longestVersionLength = Number.NEGATIVE_INFINITY;
-                sortedVersions.forEach((v) => {
-                    if (v.length > longestVersionLength) {
-                        longestVersionLength = v.length;
-                    }
-                });
-
-                for (const version of sortedVersions) {
-                    const importers = Array.from(
-                        packageToVersionsMap.get(duplicatedPackage)!.get(version)!,
-                    );
-                    const formattedVersion = c.bold(
-                        c.yellow(version.padEnd(longestVersionLength, ' ')),
-                    );
-                    const formattedImporters = importers
-                        .filter((name) => name !== duplicatedPackage)
-                        .map((name) => c.green(name))
-                        .join(', ');
-                    console.warn(`    - ${formattedVersion} imported by ${formattedImporters}`);
-                }
-            }
-            process.stdout.write('\n');
+            buildEnd,
         },
     };
 });
