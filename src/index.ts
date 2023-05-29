@@ -50,6 +50,8 @@ const getPackageInfo = pMemoize(async (id: string) => {
 
 export default createUnplugin<Options | undefined>(() => {
     const name = 'unplugin-detect-duplicated-deps';
+    let isVitePlugin = false;
+
     /**
      * Map(1) {
      *   'axios' => Map(2) {
@@ -106,11 +108,11 @@ export default createUnplugin<Options | undefined>(() => {
             .map((name) => c.magenta(name))
             .join(', ');
         const warningMessages = [
-            `multiple versions of ${formattedDuplicatedPackageNames} is bundled!\n`,
+            `multiple versions of ${formattedDuplicatedPackageNames} is bundled!`,
         ];
 
         for (const duplicatedPackage of duplicatedPackages) {
-            warningMessages.push(`  ${c.magenta(duplicatedPackage)}:`);
+            warningMessages.push(`\n  ${c.magenta(duplicatedPackage)}:`);
 
             const sortedVersions = [...packageToVersionsMap.get(duplicatedPackage)!.keys()].sort(
                 (a, b) => (gt(a, b) ? 1 : -1),
@@ -139,7 +141,7 @@ export default createUnplugin<Options | undefined>(() => {
         }
         // remove vite output dim colorize
         // eslint-disable-next-line unicorn/escape-case, unicorn/no-hex-escape
-        process.stdout.write('\x1b[0m');
+        process.stdout.write(`\x1b[0m${isVitePlugin ? '\n' : ''}`);
         consola.warn(warningMessages.join('\n'));
     };
 
@@ -147,6 +149,9 @@ export default createUnplugin<Options | undefined>(() => {
         name,
         vite: {
             enforce: 'pre',
+            config() {
+                isVitePlugin = true;
+            },
             resolveId,
             buildEnd,
         },
