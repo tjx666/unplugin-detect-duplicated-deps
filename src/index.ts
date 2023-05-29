@@ -13,6 +13,8 @@ export interface Options {}
 
 const workspaceRootFolder = await workspaceRoot();
 
+console.log('workspaceRootFolder:', workspaceRootFolder);
+
 function parsePackageNameFromModulePath(id: string) {
     const packageNameRegex = /.*\/node_modules\/((?:@[^/]+\/)?[^/]+)/;
     const match = id.match(packageNameRegex);
@@ -85,58 +87,66 @@ export default createUnplugin<Options | undefined>(() => {
         }
     };
 
+    const buildEnd: RollupPlugin['buildEnd'] = function () {
+        console.log('packageToVersionsMap:');
+        console.dir(packageToVersionsMap);
+
+        const duplicatedPackages: string[] = [];
+        for (const [packageName, versionsMap] of packageToVersionsMap.entries()) {
+            if (versionsMap.size > 1) {
+                duplicatedPackages.push(packageName);
+            }
+        }
+        if (duplicatedPackages.length === 0) return;
+
+        const formattedDuplicatedPackageNames = duplicatedPackages
+            .map((name) => c.magenta(name))
+            .join(', ');
+        const warningMessages = [
+            `multiple versions of ${formattedDuplicatedPackageNames} is bundled!\n`,
+        ];
+
+        for (const duplicatedPackage of duplicatedPackages) {
+            warningMessages.push(`  ${c.magenta(duplicatedPackage)}:`);
+
+            const sortedVersions = [...packageToVersionsMap.get(duplicatedPackage)!.keys()].sort(
+                (a, b) => (gt(a, b) ? 1 : -1),
+            );
+
+            let longestVersionLength = Number.NEGATIVE_INFINITY;
+            sortedVersions.forEach((v) => {
+                if (v.length > longestVersionLength) {
+                    longestVersionLength = v.length;
+                }
+            });
+
+            for (const version of sortedVersions) {
+                const importers = Array.from(
+                    packageToVersionsMap.get(duplicatedPackage)!.get(version)!,
+                );
+                const formattedVersion = c.bold(
+                    c.yellow(version.padEnd(longestVersionLength, ' ')),
+                );
+                const formattedImporters = importers
+                    .filter((name) => name !== duplicatedPackage)
+                    .map((name) => c.green(name))
+                    .join(', ');
+                warningMessages.push(`    - ${formattedVersion} imported by ${formattedImporters}`);
+            }
+        }
+        consola.warn(warningMessages.join('\n'));
+    };
+
     return {
         name,
         vite: {
             enforce: 'pre',
             resolveId,
+            buildEnd,
         },
         rollup: {
             resolveId,
-        },
-        buildEnd() {
-            const duplicatedPackages: string[] = [];
-            for (const [packageName, versionsMap] of packageToVersionsMap.entries()) {
-                if (versionsMap.size > 1) {
-                    duplicatedPackages.push(packageName);
-                }
-            }
-            if (duplicatedPackages.length === 0) return;
-
-            const formattedDuplicatedPackageNames = duplicatedPackages
-                .map((name) => c.magenta(name))
-                .join(', ');
-            consola.warn(`multiple versions of ${formattedDuplicatedPackageNames} is bundled!`);
-
-            for (const duplicatedPackage of duplicatedPackages) {
-                console.warn(`  ${c.magenta(duplicatedPackage)}:`);
-
-                const sortedVersions = [
-                    ...packageToVersionsMap.get(duplicatedPackage)!.keys(),
-                ].sort((a, b) => (gt(a, b) ? 1 : -1));
-
-                let longestVersionLength = Number.NEGATIVE_INFINITY;
-                sortedVersions.forEach((v) => {
-                    if (v.length > longestVersionLength) {
-                        longestVersionLength = v.length;
-                    }
-                });
-
-                for (const version of sortedVersions) {
-                    const importers = Array.from(
-                        packageToVersionsMap.get(duplicatedPackage)!.get(version)!,
-                    );
-                    const formattedVersion = c.bold(
-                        c.yellow(version.padEnd(longestVersionLength, ' ')),
-                    );
-                    const formattedImporters = importers
-                        .filter((name) => name !== duplicatedPackage)
-                        .map((name) => c.green(name))
-                        .join(', ');
-                    console.warn(`    - ${formattedVersion} imported by ${formattedImporters}`);
-                }
-            }
-            process.stdout.write('\n');
+            buildEnd,
         },
     };
 });
