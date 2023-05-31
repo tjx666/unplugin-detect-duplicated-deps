@@ -6,9 +6,6 @@ Detect duplicate packaged dependencies
 
 ![effect](docs/effect.png)
 
-> **Warning**
-> This package is not yet stable. Please take special care before using it in a production environment
-
 ## Installation
 
 ```bash
