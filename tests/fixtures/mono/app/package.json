@@ -4,7 +4,8 @@
         "clean": "rimraf -rf dist",
         "build:vite:esm": "pnpm clean && vite build -c vite.config.mts",
         "build:vite:cjs": "pnpm clean && vite build -c vite.config.cts",
-        "build:rollup": "pnpm clean && rollup -c",
+        "build:rollup:esm": "pnpm clean && rollup -c rollup.config.mjs",
+        "build:rollup:cjs": "pnpm clean && rollup -c rollup.config.cjs",
         "build": "pnpm build:vite:esm && pnpm build:vite:cjs && pnpm build:rollup"
     },
     "dependencies": {

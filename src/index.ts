@@ -141,7 +141,7 @@ export default createUnplugin<Options | undefined>(() => {
                     c.yellow(version.padEnd(longestVersionLength, ' ')),
                 );
                 const formattedImporters = importers
-                    .filter((name) => name !== duplicatedPackage)
+                    .filter((importer) => importer !== `${duplicatedPackage}@${version}`)
                     .map((name) => c.green(name))
                     .join(', ');
                 warningMessages.push(`    - ${formattedVersion} imported by ${formattedImporters}`);

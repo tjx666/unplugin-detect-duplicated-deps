@@ -1,0 +1,5 @@
+[warn] multiple versions of axios is bundled!
+
+  axios:
+    - 0.27.2 imported by tests/fixtures/mono/packages/pkg2/index.js, axios@0.27.2
+    - 1.4.0  imported by axios@1.4.0
