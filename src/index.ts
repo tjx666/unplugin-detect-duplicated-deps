@@ -3,7 +3,6 @@ import path from 'node:path';
 
 import { normalizePath } from '@rollup/pluginutils';
 import consola from 'consola';
-import mem from 'mem';
 import pMemoize from 'p-memoize';
 import c from 'picocolors';
 import { gt } from 'semver';
@@ -13,16 +12,20 @@ import { workspaceRoot } from 'workspace-root';
 
 export interface Options {}
 
-let workspaceRootFolder = await workspaceRoot();
-if (workspaceRootFolder) {
-    workspaceRootFolder = normalizePath(workspaceRootFolder);
-}
+const getWorkspaceRootFolder = pMemoize(async () => {
+    let workspaceRootFolder = await workspaceRoot();
+    if (workspaceRootFolder) {
+        workspaceRootFolder = normalizePath(workspaceRootFolder);
+    }
+    return workspaceRootFolder;
+});
 
-const parsePackageNameFromModulePath = mem((id: string) => {
+const parsePackageNameFromModulePath = pMemoize(async (id: string) => {
     id = normalizePath(id);
     const packageNameRegex = /.*\/node_modules\/((?:@[^/]+\/)?[^/]+)/;
     const match = id.match(packageNameRegex);
     const packageName = match ? match[1] : id;
+    const workspaceRootFolder = await getWorkspaceRootFolder();
     if (workspaceRootFolder && packageName.startsWith(workspaceRootFolder)) {
         return packageName.slice(workspaceRootFolder.length + 1);
     }
@@ -75,19 +78,17 @@ export default createUnplugin<Options | undefined>(() => {
             if (packageInfo) {
                 const { name, version } = packageInfo;
                 const existedVersionsMap = packageToVersionsMap.get(name);
+                const importerPackage = await parsePackageNameFromModulePath(importer);
                 if (existedVersionsMap) {
                     const existedImporters = existedVersionsMap.get(version);
                     if (existedImporters) {
-                        existedImporters.add(parsePackageNameFromModulePath(importer));
+                        existedImporters.add(importerPackage);
                     } else {
-                        existedVersionsMap.set(
-                            version,
-                            new Set([parsePackageNameFromModulePath(importer)]),
-                        );
+                        existedVersionsMap.set(version, new Set([importerPackage]));
                     }
                 } else {
                     const versionMap = new Map<string, Set<string>>([
-                        [version, new Set([parsePackageNameFromModulePath(importer)])],
+                        [version, new Set([importerPackage])],
                     ]);
                     packageToVersionsMap.set(name, versionMap);
                 }
