@@ -2,9 +2,10 @@
     "name": "app",
     "scripts": {
         "clean": "rimraf -rf dist",
-        "build:vite": "pnpm clean && vite build",
+        "build:vite:esm": "pnpm clean && vite build -c vite.config.mts",
+        "build:vite:cjs": "pnpm clean && vite build -c vite.config.cts",
         "build:rollup": "pnpm clean && rollup -c",
-        "build": "pnpm build:vite && pnpm build:rollup"
+        "build": "pnpm build:vite:esm && pnpm build:vite:cjs && pnpm build:rollup"
     },
     "dependencies": {
         "pkg1": "workspace:*",

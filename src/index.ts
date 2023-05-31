@@ -3,16 +3,17 @@ import path from 'node:path';
 
 import { normalizePath } from '@rollup/pluginutils';
 import consola from 'consola';
-import pMemoize from 'p-memoize';
 import c from 'picocolors';
 import { gt } from 'semver';
 import type { RollupPlugin } from 'unplugin';
 import { createUnplugin } from 'unplugin';
 import { workspaceRoot } from 'workspace-root';
 
+import { memoizeAsync } from './utils';
+
 export interface Options {}
 
-const getWorkspaceRootFolder = pMemoize(async () => {
+const getWorkspaceRootFolder = memoizeAsync(async () => {
     let workspaceRootFolder = await workspaceRoot();
     if (workspaceRootFolder) {
         workspaceRootFolder = normalizePath(workspaceRootFolder);
@@ -20,7 +21,7 @@ const getWorkspaceRootFolder = pMemoize(async () => {
     return workspaceRootFolder;
 });
 
-const parsePackageNameFromModulePath = pMemoize(async (id: string) => {
+const parsePackageNameFromModulePath = memoizeAsync(async (id: string) => {
     id = normalizePath(id);
     const packageNameRegex = /.*\/node_modules\/((?:@[^/]+\/)?[^/]+)/;
     const match = id.match(packageNameRegex);
@@ -32,7 +33,7 @@ const parsePackageNameFromModulePath = pMemoize(async (id: string) => {
     return packageName;
 });
 
-const getPackageInfo = pMemoize(async (id: string) => {
+const getPackageInfo = memoizeAsync(async (id: string) => {
     id = normalizePath(id);
     const packagePathRegex = /.*\/node_modules\/(?:@[^/]+\/)?[^/]+/;
     const match = id.match(packagePathRegex);
@@ -144,6 +145,11 @@ export default createUnplugin<Options | undefined>(() => {
         // eslint-disable-next-line unicorn/escape-case, unicorn/no-hex-escape
         process.stdout.write(`\x1b[0m${isVitePlugin ? '\n' : ''}`);
         consola.warn(warningMessages.join('\n'));
+
+        // recycle cached promise
+        getWorkspaceRootFolder.destroy();
+        getPackageInfo.destroy();
+        parsePackageNameFromModulePath.destroy();
     };
 
     return {
