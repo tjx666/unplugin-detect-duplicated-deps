@@ -84,8 +84,8 @@ export default createUnplugin<Options | undefined>(() => {
             const packageInfo = await getPackageInfo(resolved.id);
             if (packageInfo) {
                 const { name, version } = packageInfo;
-                const existedVersionsMap = packageToVersionsMap.get(name);
                 const formattedImporter = await formatImporter(importer);
+                const existedVersionsMap = packageToVersionsMap.get(name);
                 if (existedVersionsMap) {
                     const existedImporters = existedVersionsMap.get(version);
                     if (existedImporters) {
