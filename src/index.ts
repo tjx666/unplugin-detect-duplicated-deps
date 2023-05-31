@@ -21,21 +21,9 @@ const getWorkspaceRootFolder = memoizeAsync(async () => {
     return workspaceRootFolder;
 });
 
-const parsePackageNameFromModulePath = memoizeAsync(async (id: string) => {
-    id = normalizePath(id);
-    const packageNameRegex = /.*\/node_modules\/((?:@[^/]+\/)?[^/]+)/;
-    const match = id.match(packageNameRegex);
-    const packageName = match ? match[1] : id;
-    const workspaceRootFolder = await getWorkspaceRootFolder();
-    if (workspaceRootFolder && packageName.startsWith(workspaceRootFolder)) {
-        return packageName.slice(workspaceRootFolder.length + 1);
-    }
-    return packageName;
-});
-
+const packagePathRegex = /.*\/node_modules\/(?:@[^/]+\/)?[^/]+/;
 const getPackageInfo = memoizeAsync(async (id: string) => {
     id = normalizePath(id);
-    const packagePathRegex = /.*\/node_modules\/(?:@[^/]+\/)?[^/]+/;
     const match = id.match(packagePathRegex);
     if (match) {
         const packageJsonPath = path.join(match[0], 'package.json');
@@ -50,6 +38,24 @@ const getPackageInfo = memoizeAsync(async (id: string) => {
         }
     }
     return null;
+});
+
+const formatImporter = memoizeAsync(async (importer: string) => {
+    importer = normalizePath(importer);
+
+    let formattedImporter = importer;
+    if (packagePathRegex.test(importer)) {
+        const packageInfo = await getPackageInfo(importer);
+        if (packageInfo) {
+            formattedImporter = `${packageInfo.name}@${packageInfo.version}`;
+        }
+    }
+
+    const workspaceRootFolder = await getWorkspaceRootFolder();
+    if (workspaceRootFolder && formattedImporter.startsWith(workspaceRootFolder)) {
+        return formattedImporter.slice(workspaceRootFolder.length + 1);
+    }
+    return formattedImporter;
 });
 
 export default createUnplugin<Options | undefined>(() => {
@@ -79,17 +85,17 @@ export default createUnplugin<Options | undefined>(() => {
             if (packageInfo) {
                 const { name, version } = packageInfo;
                 const existedVersionsMap = packageToVersionsMap.get(name);
-                const importerPackage = await parsePackageNameFromModulePath(importer);
+                const formattedImporter = await formatImporter(importer);
                 if (existedVersionsMap) {
                     const existedImporters = existedVersionsMap.get(version);
                     if (existedImporters) {
-                        existedImporters.add(importerPackage);
+                        existedImporters.add(formattedImporter);
                     } else {
-                        existedVersionsMap.set(version, new Set([importerPackage]));
+                        existedVersionsMap.set(version, new Set([formattedImporter]));
                     }
                 } else {
                     const versionMap = new Map<string, Set<string>>([
-                        [version, new Set([importerPackage])],
+                        [version, new Set([formattedImporter])],
                     ]);
                     packageToVersionsMap.set(name, versionMap);
                 }
@@ -149,7 +155,7 @@ export default createUnplugin<Options | undefined>(() => {
         // recycle cached promise
         getWorkspaceRootFolder.destroy();
         getPackageInfo.destroy();
-        parsePackageNameFromModulePath.destroy();
+        formatImporter.destroy();
     };
 
     return {
