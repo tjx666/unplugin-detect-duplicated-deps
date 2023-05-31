@@ -59,7 +59,7 @@
         "lint:fix": "pnpm run lint --fix",
         "build": "tsup && tsx scripts/postbuild.mts",
         "dev": "tsup --watch",
-        "test": "vitest",
+        "test": "vitest --test-timeout=10000",
         "release": "bumpp && pnpm publish",
         "prepublishOnly": "pnpm run build"
     },

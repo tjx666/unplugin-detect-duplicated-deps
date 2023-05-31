@@ -13,6 +13,9 @@ const exec = async (command: string) => {
     const result = await execa(cmd, args, {
         cwd: testCwd,
         preferLocal: true,
+        env: {
+            NO_COLOR: 'true',
+        },
     });
     return result;
 };
