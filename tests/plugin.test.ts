@@ -17,7 +17,10 @@ const exec = async (command: string) => {
             NO_COLOR: 'true',
         },
     });
-    return result;
+    return {
+        stderr: result.stderr.replaceAll('\r?\n?', '\n'),
+        stdout: result.stdout.replaceAll('\r?\n?', '\n'),
+    };
 };
 
 test('vite esm', async () => {
