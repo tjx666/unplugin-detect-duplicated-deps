@@ -9,7 +9,7 @@ import type { RollupPlugin } from 'unplugin';
 import { createUnplugin } from 'unplugin';
 import { workspaceRoot } from 'workspace-root';
 
-import { memoizeAsync } from './utils';
+import { memoizeAsync, getPkgSize as _getPkgSize } from './utils';
 
 export interface Options {}
 
@@ -58,6 +58,22 @@ const formatImporter = memoizeAsync(async (importer: string) => {
     return formattedImporter;
 });
 
+const getPkgSize = memoizeAsync(_getPkgSize);
+
+function colorizeSize(kb: number) {
+    if (Number.isNaN(kb)) return '';
+
+    let colorFunc: (str: string) => string;
+    if (kb > 1000) {
+        colorFunc = c.red;
+    } else if (kb > 100) {
+        colorFunc = c.yellow;
+    } else {
+        colorFunc = c.green;
+    }
+    return `(${colorFunc(`${kb}kb`)})`;
+}
+
 export default createUnplugin<Options | undefined>(() => {
     const name = 'unplugin-detect-duplicated-deps';
     let isVitePlugin = false;
@@ -103,7 +119,7 @@ export default createUnplugin<Options | undefined>(() => {
         }
     };
 
-    const buildEnd: RollupPlugin['buildEnd'] = function () {
+    const buildEnd: RollupPlugin['buildEnd'] = async function () {
         const duplicatedPackages: string[] = [];
         for (const [packageName, versionsMap] of packageToVersionsMap.entries()) {
             if (versionsMap.size > 1) {
@@ -119,9 +135,7 @@ export default createUnplugin<Options | undefined>(() => {
             `multiple versions of ${formattedDuplicatedPackageNames} is bundled!`,
         ];
 
-        for (const duplicatedPackage of duplicatedPackages) {
-            warningMessages.push(`\n  ${c.magenta(duplicatedPackage)}:`);
-
+        const promises = duplicatedPackages.map(async (duplicatedPackage) => {
             const sortedVersions = [...packageToVersionsMap.get(duplicatedPackage)!.keys()].sort(
                 (a, b) => (gt(a, b) ? 1 : -1),
             );
@@ -133,7 +147,8 @@ export default createUnplugin<Options | undefined>(() => {
                 }
             });
 
-            for (const version of sortedVersions) {
+            let totalSize = 0;
+            const _promises = sortedVersions.map(async (version) => {
                 const importers = Array.from(
                     packageToVersionsMap.get(duplicatedPackage)!.get(version)!,
                 );
@@ -144,9 +159,23 @@ export default createUnplugin<Options | undefined>(() => {
                     .filter((importer) => importer !== `${duplicatedPackage}@${version}`)
                     .map((name) => c.green(name))
                     .join(', ');
-                warningMessages.push(`    - ${formattedVersion} imported by ${formattedImporters}`);
-            }
-        }
+                const pkgSize = await getPkgSize(duplicatedPackage, version);
+                totalSize += pkgSize;
+                warningMessages.push(
+                    // prettier-ignore
+                    `    - ${formattedVersion}${colorizeSize(pkgSize)} imported by ${formattedImporters}`,
+                );
+            });
+            await Promise.all(_promises);
+
+            warningMessages.splice(
+                warningMessages.length - sortedVersions.length,
+                0,
+                `\n  ${c.magenta(duplicatedPackage)}${colorizeSize(totalSize)}:`,
+            );
+        });
+        await Promise.all(promises);
+
         // remove vite output dim colorize
         // eslint-disable-next-line unicorn/escape-case, unicorn/no-hex-escape
         process.stdout.write(`\x1b[0m${isVitePlugin ? '\n' : ''}`);
@@ -156,6 +185,7 @@ export default createUnplugin<Options | undefined>(() => {
         getWorkspaceRootFolder.destroy();
         getPackageInfo.destroy();
         formatImporter.destroy();
+        getPkgSize.destroy();
     };
 
     return {
