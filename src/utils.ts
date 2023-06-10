@@ -66,7 +66,7 @@ export async function getPkgSize(name: string, version: string) {
         resp = await axios.get<GetPkgSizeResponseData>(
             `https://bundlephobia.com/api/size?package=${name}@${version}`,
             {
-                timeout: 6666,
+                timeout: 10 * 1000,
             },
         );
     } catch {

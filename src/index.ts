@@ -11,7 +11,9 @@ import { workspaceRoot } from 'workspace-root';
 
 import { memoizeAsync, getPkgSize as _getPkgSize } from './utils';
 
-export interface Options {}
+export interface Options {
+    fetchPkgInfoTimeout?: number;
+}
 
 const getWorkspaceRootFolder = memoizeAsync(async () => {
     let workspaceRootFolder = await workspaceRoot();
