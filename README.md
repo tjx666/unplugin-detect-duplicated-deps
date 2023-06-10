@@ -47,6 +47,7 @@ export default {
 - [duplicate-package-checker-webpack-plugin](https://github.com/darrenscerri/duplicate-package-checker-webpack-plugin)
 - [unplugin](https://github.com/unjs/unplugin)
 - [unplugin-starter](https://github.com/sxzz/unplugin-starter)
+- [bundlephobia](https://bundlephobia.com/) provide the api to get package size
 
 ## License
 
