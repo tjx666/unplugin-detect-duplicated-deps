@@ -1,8 +1,14 @@
 import type { AxiosResponse } from 'axios';
 import axios from 'axios';
 
-export function memoizeAsync<F extends (...params: any[]) => Promise<any>>(f: F) {
-    const cache = new Map<Parameters<F>[0], Promise<Awaited<ReturnType<F>>>>();
+export function memoizeAsync<F extends (...params: any[]) => Promise<any>>(
+    f: F,
+    getCacheKey?: (...args: Parameters<F>) => string,
+) {
+    const cache = new Map<
+        typeof getCacheKey extends undefined ? Parameters<F>[0] : string,
+        Promise<Awaited<ReturnType<F>>>
+    >();
     const memoizedFuncName = `memoized ${f.name}`;
 
     // use objet variable key to make meaningful function name
@@ -10,10 +16,11 @@ export function memoizeAsync<F extends (...params: any[]) => Promise<any>>(f: F)
         [memoizedFuncName](...params: Parameters<F>) {
             // return the cached promise when first param strict equal
             const firstParam = params[0];
-            if (!cache.has(firstParam)) {
-                cache.set(firstParam, f(...params));
+            const key = typeof getCacheKey === 'function' ? getCacheKey(...params) : firstParam;
+            if (!cache.has(key)) {
+                cache.set(key, f(...params));
             }
-            return cache.get(firstParam)!;
+            return cache.get(key)!;
         },
     };
 

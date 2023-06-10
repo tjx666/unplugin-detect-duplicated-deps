@@ -11,9 +11,7 @@ import { workspaceRoot } from 'workspace-root';
 
 import { memoizeAsync, getPkgSize as _getPkgSize } from './utils';
 
-export interface Options {
-    fetchPkgInfoTimeout?: number;
-}
+export interface Options {}
 
 const getWorkspaceRootFolder = memoizeAsync(async () => {
     let workspaceRootFolder = await workspaceRoot();
@@ -60,7 +58,7 @@ const formatImporter = memoizeAsync(async (importer: string) => {
     return formattedImporter;
 });
 
-const getPkgSize = memoizeAsync(_getPkgSize);
+const getPkgSize = memoizeAsync(_getPkgSize, (name, version) => `${name}@${version}`);
 
 function colorizeSize(kb: number) {
     if (Number.isNaN(kb)) return '';
@@ -138,6 +136,7 @@ export default createUnplugin<Options | undefined>(() => {
         ];
 
         const promises = duplicatedPackages.map(async (duplicatedPackage) => {
+            const warningMessagesOfPackage: string[] = [];
             const sortedVersions = [...packageToVersionsMap.get(duplicatedPackage)!.keys()].sort(
                 (a, b) => (gt(a, b) ? 1 : -1),
             );
@@ -163,20 +162,17 @@ export default createUnplugin<Options | undefined>(() => {
                     .join(', ');
                 const pkgSize = await getPkgSize(duplicatedPackage, version);
                 totalSize += pkgSize;
-                warningMessages.push(
-                    // prettier-ignore
-                    `    - ${formattedVersion}${colorizeSize(pkgSize)} imported by ${formattedImporters}`,
-                );
+                return `    - ${formattedVersion}${colorizeSize(
+                    pkgSize,
+                )} imported by ${formattedImporters}`;
             });
-            await Promise.all(_promises);
-
-            warningMessages.splice(
-                warningMessages.length - sortedVersions.length,
-                0,
+            warningMessagesOfPackage.push(...(await Promise.all(_promises)));
+            warningMessagesOfPackage.unshift(
                 `\n  ${c.magenta(duplicatedPackage)}${colorizeSize(totalSize)}:`,
             );
+            return warningMessagesOfPackage;
         });
-        await Promise.all(promises);
+        warningMessages.push(...(await Promise.all(promises)).flat());
 
         // remove vite output dim colorize
         // eslint-disable-next-line unicorn/escape-case, unicorn/no-hex-escape
