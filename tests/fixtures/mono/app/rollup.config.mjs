@@ -3,7 +3,7 @@ import rollupPluginJson from '@rollup/plugin-json';
 import rollupPLuginNodeResolve from '@rollup/plugin-node-resolve';
 import { defineConfig } from 'rollup';
 
-import unpluginDetectDuplicatedDeps from '../../../../dist/rollup.mjs';
+import unpluginDetectDuplicatedDeps from 'unplugin-detect-duplicated-deps/rollup';
 
 export default defineConfig({
     input: 'index.js',

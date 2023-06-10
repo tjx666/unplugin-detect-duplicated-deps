@@ -11,7 +11,12 @@ import { workspaceRoot } from 'workspace-root';
 
 import { memoizeAsync, getPkgSize as _getPkgSize } from './utils';
 
-export interface Options {}
+export interface Options {
+    /**
+     * disable show package size can improve build speed because we get package size by api of https://bundlephobia.com/
+     */
+    showPkgSize?: boolean;
+}
 
 const getWorkspaceRootFolder = memoizeAsync(async () => {
     let workspaceRootFolder = await workspaceRoot();
@@ -74,9 +79,10 @@ function colorizeSize(kb: number) {
     return `(${colorFunc(`${kb}kb`)})`;
 }
 
-export default createUnplugin<Options | undefined>(() => {
+export default createUnplugin<Options | undefined>((options) => {
     const name = 'unplugin-detect-duplicated-deps';
     let isVitePlugin = false;
+    const { showPkgSize = true } = options ?? {};
 
     /**
      * Map(1) {
@@ -160,15 +166,18 @@ export default createUnplugin<Options | undefined>(() => {
                     .filter((importer) => importer !== `${duplicatedPackage}@${version}`)
                     .map((name) => c.green(name))
                     .join(', ');
-                const pkgSize = await getPkgSize(duplicatedPackage, version);
-                totalSize += pkgSize;
-                return `    - ${formattedVersion}${colorizeSize(
-                    pkgSize,
-                )} imported by ${formattedImporters}`;
+                if (showPkgSize) {
+                    const pkgSize = await getPkgSize(duplicatedPackage, version);
+                    totalSize += pkgSize;
+                    // prettier-ignore
+                    return `    - ${formattedVersion}${colorizeSize(pkgSize)} imported by ${formattedImporters}`;
+                } else {
+                    return `    - ${formattedVersion} imported by ${formattedImporters}`;
+                }
             });
             warningMessagesOfPackage.push(...(await Promise.all(_promises)));
             warningMessagesOfPackage.unshift(
-                `\n  ${c.magenta(duplicatedPackage)}${colorizeSize(totalSize)}:`,
+                `\n  ${c.magenta(duplicatedPackage)}${showPkgSize ? colorizeSize(totalSize) : ''}:`,
             );
             return warningMessagesOfPackage;
         });

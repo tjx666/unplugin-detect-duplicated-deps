@@ -6,7 +6,8 @@
         "build:vite:cjs": "pnpm clean && vite build -c vite.config.cts",
         "build:rollup:esm": "pnpm clean && rollup -c rollup.config.mjs",
         "build:rollup:cjs": "pnpm clean && rollup -c rollup.config.cjs",
-        "build": "pnpm build:vite:esm && pnpm build:vite:cjs && pnpm build:rollup"
+        "build:vite:disable-show-pkg-size": "pnpm clean && vite build -c vite.config.disable-show-pkg-size.mts",
+        "build": "pnpm build:vite:esm && pnpm build:vite:cjs && pnpm build:rollup:esm && pnpm build:rollup:cjs && pnpm build:vite:disable-show-pkg-size"
     },
     "dependencies": {
         "pkg1": "workspace:*",
@@ -19,6 +20,7 @@
         "axios": "^1.4.0",
         "rimraf": "^5.0.1",
         "rollup": "^3.24.1",
+        "unplugin-detect-duplicated-deps": "workspace:*",
         "vite": "^4.3.9"
     }
 }

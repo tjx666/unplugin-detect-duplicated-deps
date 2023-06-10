@@ -3,7 +3,7 @@ const rollupPluginJson = require('@rollup/plugin-json');
 const rollupPLuginNodeResolve = require('@rollup/plugin-node-resolve');
 const { defineConfig } = require('rollup');
 
-const unpluginDetectDuplicatedDeps = require('../../../../dist/rollup.js');
+const unpluginDetectDuplicatedDeps = require('unplugin-detect-duplicated-deps/rollup');
 
 module.exports = defineConfig({
     input: 'index.js',

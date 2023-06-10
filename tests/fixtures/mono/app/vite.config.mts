@@ -1,4 +1,4 @@
-import UnpluginDetectDuplicatedDeps from '../../../../dist/vite.mjs';
+import UnpluginDetectDuplicatedDeps from 'unplugin-detect-duplicated-deps/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({

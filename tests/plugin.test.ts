@@ -46,3 +46,9 @@ test('rollup cjs', async () => {
     expect(result.stdout).toBe(stdout);
     expect(result.stderr).toBe(stderr);
 });
+
+test('no pkg size', async () => {
+    const result = await exec('vite build -l error -c vite.config.disable-show-pkg-size.mts');
+    expect(result.stdout).toBe(stdout);
+    expect(result.stderr).toBe(await fs.readFile(resolve(testCwd, 'no-pkg-size.txt'), 'utf8'));
+});
