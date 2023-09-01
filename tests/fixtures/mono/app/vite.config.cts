@@ -5,7 +5,7 @@ export default defineConfig({
     plugins: [
         UnpluginDetectDuplicatedDeps({
             throwErrorWhenDuplicated: true,
-            whiteList: {
+            whitelist: {
                 axios: ['0.27.2', '1.4.0'],
             },
         }),

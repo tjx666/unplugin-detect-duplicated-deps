@@ -16,9 +16,20 @@ export interface Options {
      * disable show package size can improve build speed because we get package size by api of https://bundlephobia.com/
      */
     showPkgSize?: boolean;
+    /**
+     * useful in ci check
+     */
     throwErrorWhenDuplicated?: boolean;
-    whiteList?: Record<string, string[]>;
-    customErrorMessage?: (issuePackages: Map<string, string[]>) => string;
+    /**
+     * @example
+     * ```javascript
+     * {
+     *     axios: ['0.17.4', '1.4.0']
+     * }
+     * ```
+     */
+    whitelist?: Record<string, string[]>;
+    customErrorMessage?: (issuePackagesMap: Map<string, string[]>) => string;
     logLevel?: 'debug' | 'error';
 }
 
@@ -48,11 +59,12 @@ function colorizeSize(kb: number) {
 
 export default createUnplugin<Options | undefined>((options) => {
     const name = 'unplugin-detect-duplicated-deps';
+
     let isVitePlugin = false;
     const {
         showPkgSize = true,
         throwErrorWhenDuplicated = false,
-        whiteList = {},
+        whitelist: whiteList = {},
         customErrorMessage,
         logLevel = 'debug',
     } = options ?? {};
@@ -215,7 +227,7 @@ export default createUnplugin<Options | undefined>((options) => {
                     }
                 }
             }
-            const issueString = [...issuePackagesMap.entries()]
+            const duplicatedDepsList = [...issuePackagesMap.entries()]
                 .map(([packageName, _versions]) => {
                     const versions = _versions.map((version) => `v${version}`).join(', ');
                     return `  - ${packageName}: ${versions}`;
@@ -226,7 +238,7 @@ export default createUnplugin<Options | undefined>((options) => {
                 throw new Error(
                     customErrorMessage
                         ? customErrorMessage(issuePackagesMap)
-                        : `You can add following duplicated deps to whiteList to pass the check:\n${issueString}`,
+                        : `You can add following duplicated deps to whitelist option to suppress this error:\n${duplicatedDepsList}`,
                 );
             }
         }
