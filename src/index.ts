@@ -16,6 +16,9 @@ export interface Options {
      * disable show package size can improve build speed because we get package size by api of https://bundlephobia.com/
      */
     showPkgSize?: boolean;
+    throwErrorWhenDuplicated?: boolean;
+    whiteList?: Record<string, string[]>;
+    customErrorMessage?: (issuePackages: Map<string, string[]>) => string;
 }
 
 const getWorkspaceRootFolder = memoizeAsync(async () => {
@@ -82,7 +85,12 @@ function colorizeSize(kb: number) {
 export default createUnplugin<Options | undefined>((options) => {
     const name = 'unplugin-detect-duplicated-deps';
     let isVitePlugin = false;
-    const { showPkgSize = true } = options ?? {};
+    const {
+        showPkgSize = true,
+        throwErrorWhenDuplicated = false,
+        whiteList = {},
+        customErrorMessage,
+    } = options ?? {};
 
     /**
      * Map(1) {
@@ -187,6 +195,35 @@ export default createUnplugin<Options | undefined>((options) => {
         // eslint-disable-next-line unicorn/escape-case, unicorn/no-hex-escape
         process.stdout.write(`\x1b[0m${isVitePlugin ? '\n' : ''}`);
         consola.warn(warningMessages.join('\n'));
+
+        if (throwErrorWhenDuplicated) {
+            const issuePackagesMap = new Map<string, string[]>();
+            for (const [packageName, versionsMap] of packageToVersionsMap.entries()) {
+                for (const version of versionsMap.keys()) {
+                    const pass =
+                        packageName in whiteList && whiteList[packageName].includes(version);
+                    if (!pass) {
+                        const newIssueVersions = issuePackagesMap.get(packageName) ?? [];
+                        newIssueVersions.push(version);
+                        issuePackagesMap.set(packageName, newIssueVersions);
+                    }
+                }
+            }
+            const issueString = [...issuePackagesMap.entries()]
+                .map(([packageName, _versions]) => {
+                    const versions = _versions.map((version) => `v${version}`).join(', ');
+                    return `${packageName}: ${versions}`;
+                })
+                .join('\n');
+
+            if (issuePackagesMap.size > 0) {
+                throw new Error(
+                    customErrorMessage
+                        ? customErrorMessage(issuePackagesMap)
+                        : `[unplugin-detect-duplicated-deps] You can add following duplicated deps to whiteList to pass the check:\n${issueString}`,
+                );
+            }
+        }
 
         // recycle cached promise
         getWorkspaceRootFolder.destroy();
