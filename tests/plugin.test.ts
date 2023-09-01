@@ -25,6 +25,10 @@ const exec = async (command: string) => {
 
 test('vite esm', async () => {
     const result = await exec('vite build -l error -c vite.config.mts');
+
+    // await fs.writeFile(resolve(testCwd, 'stdout.txt'), result.stdout, 'utf8');
+    // await fs.writeFile(resolve(testCwd, 'stderr.txt'), result.stderr, 'utf8');
+
     expect(result.stdout).toBe(stdout);
     expect(result.stderr).toBe(stderr);
 });
@@ -49,6 +53,7 @@ test('rollup cjs', async () => {
 
 test('no pkg size', async () => {
     const result = await exec('vite build -l error -c vite.config.disable-show-pkg-size.mts');
+
     expect(result.stdout).toBe(stdout);
     expect(result.stderr).toBe(await fs.readFile(resolve(testCwd, 'no-pkg-size.txt'), 'utf8'));
 });
