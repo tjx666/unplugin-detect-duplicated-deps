@@ -67,29 +67,29 @@
         "vite": "^4"
     },
     "dependencies": {
-        "@rollup/pluginutils": "^5.0.2",
-        "axios": "^1.4.0",
-        "consola": "^3.1.0",
+        "@rollup/pluginutils": "^5.0.4",
+        "axios": "^1.5.0",
+        "consola": "^3.2.3",
         "picocolors": "^1.0.0",
-        "semver": "^7.5.1",
-        "unplugin": "^1.3.1",
-        "workspace-root": "^2.5.1"
+        "semver": "^7.5.4",
+        "unplugin": "^1.4.0",
+        "workspace-root": "^3.2.0"
     },
     "devDependencies": {
-        "@types/node": "^18.16.17",
-        "@types/semver": "^7.5.0",
-        "@yutengjing/eslint-config-typescript": "^0.4.1",
+        "@types/node": "^18.17.12",
+        "@types/semver": "^7.5.1",
+        "@yutengjing/eslint-config-typescript": "^0.4.2",
         "@yutengjing/prettier-config": "^0.0.1",
-        "bumpp": "^9.1.1",
-        "eslint": "^8.42.0",
-        "eslint-define-config": "^1.20.0",
-        "execa": "^7.1.1",
-        "fast-glob": "^3.2.12",
-        "prettier": "^2.8.8",
-        "tsup": "^6.7.0",
+        "bumpp": "^9.2.0",
+        "eslint": "^8.48.0",
+        "eslint-define-config": "^1.23.0",
+        "execa": "^8.0.1",
+        "fast-glob": "^3.3.1",
+        "prettier": "^3.0.3",
+        "tsup": "^7.2.0",
         "tsx": "^3.12.7",
-        "typescript": "^5.1.3",
-        "vite": "^4.3.9",
-        "vitest": "^0.32.0"
+        "typescript": "^5.2.2",
+        "vite": "^4.4.9",
+        "vitest": "^0.34.3"
     }
 }
