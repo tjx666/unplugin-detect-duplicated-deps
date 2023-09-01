@@ -19,6 +19,7 @@ export interface Options {
     throwErrorWhenDuplicated?: boolean;
     whiteList?: Record<string, string[]>;
     customErrorMessage?: (issuePackages: Map<string, string[]>) => string;
+    logLevel?: 'debug' | 'error';
 }
 
 const getWorkspaceRootFolder = memoizeAsync(async () => {
@@ -27,43 +28,6 @@ const getWorkspaceRootFolder = memoizeAsync(async () => {
         workspaceRootFolder = normalizePath(workspaceRootFolder);
     }
     return workspaceRootFolder;
-});
-
-const packagePathRegex = /.*\/node_modules\/(?:@[^/]+\/)?[^/]+/;
-const getPackageInfo = memoizeAsync(async (id: string) => {
-    id = normalizePath(id);
-    const match = id.match(packagePathRegex);
-    if (match) {
-        const packageJsonPath = path.join(match[0], 'package.json');
-        try {
-            const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
-            return {
-                name: packageJson.name,
-                version: packageJson.version,
-            };
-        } catch (error: any) {
-            consola.warn(`can't read package.json of module id ${id} : ${error.message}`);
-        }
-    }
-    return null;
-});
-
-const formatImporter = memoizeAsync(async (importer: string) => {
-    importer = normalizePath(importer);
-
-    let formattedImporter = importer;
-    if (packagePathRegex.test(importer)) {
-        const packageInfo = await getPackageInfo(importer);
-        if (packageInfo) {
-            formattedImporter = `${packageInfo.name}@${packageInfo.version}`;
-        }
-    }
-
-    const workspaceRootFolder = await getWorkspaceRootFolder();
-    if (workspaceRootFolder && formattedImporter.startsWith(workspaceRootFolder)) {
-        return formattedImporter.slice(workspaceRootFolder.length + 1);
-    }
-    return formattedImporter;
 });
 
 const getPkgSize = memoizeAsync(_getPkgSize, (name, version) => `${name}@${version}`);
@@ -90,7 +54,47 @@ export default createUnplugin<Options | undefined>((options) => {
         throwErrorWhenDuplicated = false,
         whiteList = {},
         customErrorMessage,
+        logLevel = 'debug',
     } = options ?? {};
+
+    const packagePathRegex = /.*\/node_modules\/(?:@[^/]+\/)?[^/]+/;
+    const getPackageInfo = memoizeAsync(async (id: string) => {
+        id = normalizePath(id);
+        const match = id.match(packagePathRegex);
+        if (match) {
+            const packageJsonPath = path.join(match[0], 'package.json');
+            try {
+                const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
+                return {
+                    name: packageJson.name,
+                    version: packageJson.version,
+                };
+            } catch (error: any) {
+                if (logLevel === 'debug') {
+                    consola.warn(`can't read package.json of module id ${id} : ${error.message}`);
+                }
+            }
+        }
+        return null;
+    });
+
+    const formatImporter = memoizeAsync(async (importer: string) => {
+        importer = normalizePath(importer);
+
+        let formattedImporter = importer;
+        if (packagePathRegex.test(importer)) {
+            const packageInfo = await getPackageInfo(importer);
+            if (packageInfo) {
+                formattedImporter = `${packageInfo.name}@${packageInfo.version}`;
+            }
+        }
+
+        const workspaceRootFolder = await getWorkspaceRootFolder();
+        if (workspaceRootFolder && formattedImporter.startsWith(workspaceRootFolder)) {
+            return formattedImporter.slice(workspaceRootFolder.length + 1);
+        }
+        return formattedImporter;
+    });
 
     /**
      * Map(1) {
@@ -194,7 +198,9 @@ export default createUnplugin<Options | undefined>((options) => {
         // remove vite output dim colorize
         // eslint-disable-next-line unicorn/escape-case, unicorn/no-hex-escape
         process.stdout.write(`\x1b[0m${isVitePlugin ? '\n' : ''}`);
-        consola.warn(warningMessages.join('\n'));
+        if (logLevel === 'debug') {
+            consola.warn(warningMessages.join('\n'));
+        }
 
         if (throwErrorWhenDuplicated) {
             const issuePackagesMap = new Map<string, string[]>();
@@ -212,7 +218,7 @@ export default createUnplugin<Options | undefined>((options) => {
             const issueString = [...issuePackagesMap.entries()]
                 .map(([packageName, _versions]) => {
                     const versions = _versions.map((version) => `v${version}`).join(', ');
-                    return `${packageName}: ${versions}`;
+                    return `  - ${packageName}: ${versions}`;
                 })
                 .join('\n');
 
@@ -220,7 +226,7 @@ export default createUnplugin<Options | undefined>((options) => {
                 throw new Error(
                     customErrorMessage
                         ? customErrorMessage(issuePackagesMap)
-                        : `[unplugin-detect-duplicated-deps] You can add following duplicated deps to whiteList to pass the check:\n${issueString}`,
+                        : `You can add following duplicated deps to whiteList to pass the check:\n${issueString}`,
                 );
             }
         }

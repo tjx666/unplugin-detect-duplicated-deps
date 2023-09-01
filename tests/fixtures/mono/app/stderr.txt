@@ -1,5 +1,5 @@
 [warn] multiple versions of axios is bundled!
 
-  axios(49.876000000000005kb):
+  axios(49.876kb):
     - 0.27.2(19.658kb) imported by tests/fixtures/mono/packages/pkg2/index.js
     - 1.4.0 (30.218kb) imported by tests/fixtures/mono/packages/pkg1/index.js

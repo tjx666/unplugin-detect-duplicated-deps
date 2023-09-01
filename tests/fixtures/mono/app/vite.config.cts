@@ -2,5 +2,12 @@ import UnpluginDetectDuplicatedDeps from 'unplugin-detect-duplicated-deps/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-    plugins: [UnpluginDetectDuplicatedDeps()],
+    plugins: [
+        UnpluginDetectDuplicatedDeps({
+            throwErrorWhenDuplicated: true,
+            whiteList: {
+                axios: ['0.27.2', '1.4.0'],
+            },
+        }),
+    ],
 });
