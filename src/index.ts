@@ -217,6 +217,8 @@ export default createUnplugin<Options | undefined>((options) => {
         if (throwErrorWhenDuplicated) {
             const issuePackagesMap = new Map<string, string[]>();
             for (const [packageName, versionsMap] of packageToVersionsMap.entries()) {
+                if (versionsMap.size < 2) continue;
+
                 for (const version of versionsMap.keys()) {
                     const pass =
                         packageName in whiteList && whiteList[packageName].includes(version);
