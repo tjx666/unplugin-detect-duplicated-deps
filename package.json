@@ -1,6 +1,6 @@
 {
     "name": "unplugin-detect-duplicated-deps",
-    "version": "0.2.2",
+    "version": "0.3.0",
     "description": "Detect duplicate packaged dependencies",
     "keywords": [
         "unplugin",
