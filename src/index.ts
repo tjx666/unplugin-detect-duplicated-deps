@@ -79,7 +79,7 @@ function colorizeSize(kb: number) {
     } else {
         colorFunc = c.green;
     }
-    return `(${colorFunc(`${kb}kb`)})`;
+    return `(${colorFunc(`${kb.toFixed(3)}kb`)})`;
 }
 
 export default createUnplugin<Options | undefined>((options) => {
