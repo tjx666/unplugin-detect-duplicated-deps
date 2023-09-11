@@ -29,7 +29,10 @@ export interface Options {
      * ```
      */
     whitelist?: Record<string, string[]>;
-    customErrorMessage?: (issuePackagesMap: Map<string, string[]>) => string;
+    customErrorMessage?: (
+        issuePackagesMap: Map<string, string[]>,
+        duplicatedDeps: Record<string, string[]>,
+    ) => string;
     logLevel?: 'debug' | 'error';
 }
 
@@ -216,9 +219,13 @@ export default createUnplugin<Options | undefined>((options) => {
 
         if (throwErrorWhenDuplicated) {
             const issuePackagesMap = new Map<string, string[]>();
+            const duplicatedDeps: Record<string, string[]> = {};
             for (const [packageName, versionsMap] of packageToVersionsMap.entries()) {
                 if (versionsMap.size < 2) continue;
 
+                duplicatedDeps[packageName] = [...versionsMap.keys()].sort((a, b) =>
+                    gt(a, b) ? 1 : -1,
+                );
                 for (const version of versionsMap.keys()) {
                     const pass =
                         packageName in whiteList && whiteList[packageName].includes(version);
@@ -239,7 +246,7 @@ export default createUnplugin<Options | undefined>((options) => {
             if (issuePackagesMap.size > 0) {
                 throw new Error(
                     customErrorMessage
-                        ? customErrorMessage(issuePackagesMap)
+                        ? customErrorMessage(issuePackagesMap, duplicatedDeps)
                         : `You can add following duplicated deps to whitelist option to suppress this error:\n${duplicatedDepsList}`,
                 );
             }
