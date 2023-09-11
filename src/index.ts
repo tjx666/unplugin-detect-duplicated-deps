@@ -31,7 +31,7 @@ export interface Options {
     whitelist?: Record<string, string[]>;
     customErrorMessage?: (
         issuePackagesMap: Map<string, string[]>,
-        duplicatedDeps: Record<string, string[]>,
+        duplicatedDeps: Map<string, string[]>,
     ) => string;
     logLevel?: 'debug' | 'error';
 }
@@ -58,6 +58,10 @@ function colorizeSize(kb: number) {
         colorFunc = c.green;
     }
     return `(${colorFunc(`${kb.toFixed(3)}kb`)})`;
+}
+
+function sortVersions(versions: string[]) {
+    return versions.sort((a, b) => (gt(a, b) ? 1 : -1));
 }
 
 export default createUnplugin<Options | undefined>((options) => {
@@ -170,10 +174,9 @@ export default createUnplugin<Options | undefined>((options) => {
 
         const promises = duplicatedPackages.map(async (duplicatedPackage) => {
             const warningMessagesOfPackage: string[] = [];
-            const sortedVersions = [...packageToVersionsMap.get(duplicatedPackage)!.keys()].sort(
-                (a, b) => (gt(a, b) ? 1 : -1),
-            );
-
+            const sortedVersions = sortVersions([
+                ...packageToVersionsMap.get(duplicatedPackage)!.keys(),
+            ]);
             let longestVersionLength = Number.NEGATIVE_INFINITY;
             sortedVersions.forEach((v) => {
                 if (v.length > longestVersionLength) {
@@ -219,13 +222,11 @@ export default createUnplugin<Options | undefined>((options) => {
 
         if (throwErrorWhenDuplicated) {
             const issuePackagesMap = new Map<string, string[]>();
-            const duplicatedDeps: Record<string, string[]> = {};
+            const duplicatedPackagesMap = new Map<string, string[]>();
             for (const [packageName, versionsMap] of packageToVersionsMap.entries()) {
                 if (versionsMap.size < 2) continue;
 
-                duplicatedDeps[packageName] = [...versionsMap.keys()].sort((a, b) =>
-                    gt(a, b) ? 1 : -1,
-                );
+                duplicatedPackagesMap.set(packageName, sortVersions([...versionsMap.keys()]));
                 for (const version of versionsMap.keys()) {
                     const pass =
                         packageName in whiteList && whiteList[packageName].includes(version);
@@ -234,6 +235,10 @@ export default createUnplugin<Options | undefined>((options) => {
                         newIssueVersions.push(version);
                         issuePackagesMap.set(packageName, newIssueVersions);
                     }
+                }
+
+                if (issuePackagesMap.has(packageName)) {
+                    sortVersions(issuePackagesMap.get(packageName)!);
                 }
             }
             const duplicatedDepsList = [...issuePackagesMap.entries()]
@@ -246,7 +251,7 @@ export default createUnplugin<Options | undefined>((options) => {
             if (issuePackagesMap.size > 0) {
                 throw new Error(
                     customErrorMessage
-                        ? customErrorMessage(issuePackagesMap, duplicatedDeps)
+                        ? customErrorMessage(issuePackagesMap, duplicatedPackagesMap)
                         : `You can add following duplicated deps to whitelist option to suppress this error:\n${duplicatedDepsList}`,
                 );
             }
