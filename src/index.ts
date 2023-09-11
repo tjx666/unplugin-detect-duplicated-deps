@@ -123,7 +123,7 @@ export default createUnplugin<Options | undefined>((options) => {
      *   }
      * }
      */
-    const packageToVersionsMap = new Map<string, Map<string, Set<string>>>();
+    let packageToVersionsMap = new Map<string, Map<string, Set<string>>>();
 
     const resolveId: RollupPlugin['resolveId'] = async function (source, importer, options) {
         if (!importer || options.isEntry) return;
@@ -158,6 +158,10 @@ export default createUnplugin<Options | undefined>((options) => {
 
     const buildEnd: RollupPlugin['buildEnd'] = async function () {
         const duplicatedPackages: string[] = [];
+        // sort by package name
+        packageToVersionsMap = new Map(
+            [...packageToVersionsMap.entries()].sort((a, b) => (a[0] > b[0] ? 1 : -1)),
+        );
         for (const [packageName, versionsMap] of packageToVersionsMap.entries()) {
             if (versionsMap.size > 1) {
                 duplicatedPackages.push(packageName);
