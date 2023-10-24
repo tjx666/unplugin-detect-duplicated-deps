@@ -7,7 +7,9 @@ export default defineConfig({
             throwErrorWhenDuplicated: true,
             whitelist: {
                 axios: ['0.27.2', '1.4.0'],
+                '@pixi/utils': ['7.2.4', '7.0.0']
             },
+            deep: false
         }),
     ],
 });
