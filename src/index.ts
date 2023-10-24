@@ -34,6 +34,7 @@ export interface Options {
         duplicatedDeps: Map<string, string[]>,
     ) => string;
     logLevel?: 'debug' | 'error';
+    deep?: boolean;
 }
 
 const getWorkspaceRootFolder = memoizeAsync(async () => {
@@ -74,10 +75,14 @@ export default createUnplugin<Options | undefined>((options) => {
         whitelist: whiteList = {},
         customErrorMessage,
         logLevel = 'debug',
+        deep = true
     } = options ?? {};
 
     const packagePathRegex = /.*\/node_modules\/(?:@[^/]+\/)?[^/]+/;
-    const getPackageInfo = memoizeAsync(async (id: string) => {
+    const getPackageInfo = memoizeAsync(async (id: string, importer?: string) => {
+        if(importer && !deep && packagePathRegex.test(importer)) {
+            return null;
+        }
         id = normalizePath(id);
         const match = id.match(packagePathRegex);
         if (match) {
@@ -132,9 +137,8 @@ export default createUnplugin<Options | undefined>((options) => {
             ...options,
             skipSelf: true,
         });
-
         if (resolved) {
-            const packageInfo = await getPackageInfo(resolved.id);
+            const packageInfo = await getPackageInfo(resolved.id, importer);
             if (packageInfo) {
                 const { name, version } = packageInfo;
                 const formattedImporter = await formatImporter(importer);
