@@ -2,6 +2,7 @@
     "name": "pkg1",
     "main": "index.js",
     "dependencies": {
+        "@pixi/utils": "7.2.4",
         "axios": "^1.4.0"
     }
 }

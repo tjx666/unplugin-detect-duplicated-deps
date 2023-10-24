@@ -15,6 +15,6 @@ module.exports = defineConfig({
         rollupPluginCommonjs(),
         rollupPLuginNodeResolve(),
         rollupPluginJson(),
-        unpluginDetectDuplicatedDeps(),
+        unpluginDetectDuplicatedDeps({ deep: false}),
     ],
 });
