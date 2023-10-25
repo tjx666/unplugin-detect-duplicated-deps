@@ -26,6 +26,16 @@
     "main": "./dist/index.js",
     "module": "./dist/index.mjs",
     "types": "./dist/index.d.ts",
+    "maintainers": [
+        {
+            "name": "YuTengjing",
+            "email": "ytj2713151713@gmail.com"
+        },
+        {
+            "name": "Zhengz",
+            "email": "mljsgto222@gmail.com"
+        }
+    ],
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
