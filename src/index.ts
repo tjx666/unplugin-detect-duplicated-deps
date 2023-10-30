@@ -75,32 +75,36 @@ export default createUnplugin<Options | undefined>((options) => {
         whitelist: whiteList = {},
         customErrorMessage,
         logLevel = 'debug',
-        deep = true
+        deep = true,
     } = options ?? {};
 
     const packagePathRegex = /.*\/node_modules\/(?:@[^/]+\/)?[^/]+/;
-    const getPackageInfo = memoizeAsync(async (id: string, importer?: string) => {
-        if(importer && !deep && packagePathRegex.test(importer)) {
-            return null;
-        }
-        id = normalizePath(id);
-        const match = id.match(packagePathRegex);
-        if (match) {
-            const packageJsonPath = path.join(match[0], 'package.json');
-            try {
-                const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
-                return {
-                    name: packageJson.name,
-                    version: packageJson.version,
-                };
-            } catch (error: any) {
-                if (logLevel === 'debug') {
-                    consola.warn(`can't read package.json of module id ${id} : ${error.message}`);
+    const getPackageInfo: ((
+        id: string,
+        importer?: string,
+    ) => Promise<{ name: string; version: string } | null>) & { destroy: () => void } =
+        memoizeAsync(async (id: string, importer?: string) => {
+            if (importer && !deep && packagePathRegex.test(importer)) {
+                return null;
+            }
+            id = normalizePath(id);
+            const match = id.match(packagePathRegex);
+            if (match) {
+                const packageJsonPath = path.join(match[0], 'package.json');
+                try {
+                    const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
+                    return {
+                        name: packageJson.name,
+                        version: packageJson.version,
+                    };
+                } catch {
+                    // some package publish dist with a folder named node_modules
+                    const realPackagePath = id.slice(0, id.lastIndexOf('node_modules'));
+                    return getPackageInfo(realPackagePath, importer);
                 }
             }
-        }
-        return null;
-    });
+            return null;
+        });
 
     const formatImporter = memoizeAsync(async (importer: string) => {
         importer = normalizePath(importer);
