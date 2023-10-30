@@ -84,10 +84,15 @@ export default createUnplugin<Options | undefined>((options) => {
         importer?: string,
     ) => Promise<{ name: string; version: string } | null>) & { destroy: () => void } =
         memoizeAsync(async (id: string, importer?: string) => {
+            id = normalizePath(id);
+            if (importer) {
+                importer = normalizePath(importer);
+            }
+
             if (importer && !deep && packagePathRegex.test(importer)) {
                 return null;
             }
-            id = normalizePath(id);
+
             const match = id.match(packagePathRegex);
             if (match) {
                 const packageJsonPath = path.join(match[0], 'package.json');
