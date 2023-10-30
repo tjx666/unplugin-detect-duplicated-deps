@@ -14,13 +14,16 @@ import { memoizeAsync, getPkgSize as _getPkgSize } from './utils';
 export interface Options {
     /**
      * disable show package size can improve build speed because we get package size by api of https://bundlephobia.com/
+     * @default true
      */
     showPkgSize?: boolean;
     /**
      * useful in ci check
+     * @default false
      */
     throwErrorWhenDuplicated?: boolean;
     /**
+     * @default {}
      * @example
      * ```javascript
      * {
@@ -33,7 +36,14 @@ export interface Options {
         issuePackagesMap: Map<string, string[]>,
         duplicatedDeps: Map<string, string[]>,
     ) => string;
+    /**
+     * @default 'debug'
+     */
     logLevel?: 'debug' | 'error';
+    /**
+     * whether report the duplicated dep depended by another dep
+     * @default true
+     */
     deep?: boolean;
 }
 

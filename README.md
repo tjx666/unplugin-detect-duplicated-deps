@@ -14,6 +14,8 @@ npm i -D unplugin-detect-duplicated-deps
 
 ## Usage
 
+You can use the jsdoc to check option description and default value.
+
 <details>
 <summary>Vite</summary><br>
 
