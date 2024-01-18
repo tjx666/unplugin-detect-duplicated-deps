@@ -66,6 +66,9 @@
     },
     "eslintConfig": {
         "extends": "@yutengjing/eslint-config-typescript",
+        "ignorePatterns": [
+            "tests/fixtures"
+        ],
         "rules": {
             "jsdoc/tag-lines": 0
         }
