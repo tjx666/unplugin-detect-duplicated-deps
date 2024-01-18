@@ -65,9 +65,11 @@
         "access": "public"
     },
     "eslintConfig": {
-        "extends": "@yutengjing/eslint-config-typescript"
+        "extends": "@yutengjing/eslint-config-typescript",
+        "rules": {
+            "jsdoc/tag-lines": 0
+        }
     },
-    "prettier": "@yutengjing/prettier-config",
     "scripts": {
         "lint": "eslint . --ext .vue,.js,.ts,.jsx,.tsx,.json,.md",
         "lint:fix": "pnpm run lint --fix",
@@ -78,15 +80,17 @@
         "prepublishOnly": "pnpm run build"
     },
     "dependencies": {
-        "@rollup/pluginutils": "^5.0.5",
-        "axios": "^1.5.1",
+        "@rollup/pluginutils": "^5.1.0",
+        "axios": "^1.6.5",
+        "cardinal": "^2.1.1",
         "consola": "^3.2.3",
         "picocolors": "^1.0.0",
         "semver": "^7.5.4",
-        "unplugin": "^1.5.0",
+        "unplugin": "^1.6.0",
         "workspace-root": "^3.2.0"
     },
     "devDependencies": {
+        "@types/cardinal": "^2.1.1",
         "@types/node": "^18.19.8",
         "@types/semver": "^7.5.6",
         "@yutengjing/eslint-config-typescript": "^0.5.2",

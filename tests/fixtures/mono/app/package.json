@@ -3,9 +3,8 @@
     "scripts": {
         "clean": "rimraf -rf dist",
         "build:vite:esm": "pnpm clean && vite build -c vite.config.mts",
-        "build:vite:cjs": "pnpm clean && vite build -c vite.config.cts",
         "build:rollup:esm": "pnpm clean && rollup -c rollup.config.mjs",
-        "build:rollup:cjs": "pnpm clean && rollup -c rollup.config.cjs",
+        "build:vite:throw-error": "pnpm clean && vite build -c vite.config.throw-error.mts",
         "build:vite:disable-show-pkg-size": "pnpm clean && vite build -c vite.config.disable-show-pkg-size.mts",
         "build": "pnpm build:vite:esm && pnpm build:vite:cjs && pnpm build:rollup:esm && pnpm build:rollup:cjs && pnpm build:vite:disable-show-pkg-size"
     },

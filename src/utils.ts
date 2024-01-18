@@ -1,5 +1,8 @@
 import type { AxiosResponse } from 'axios';
 import axios from 'axios';
+import c from 'picocolors';
+
+import type { GetPkgSizeResponseData } from './types';
 
 export function memoizeAsync<F extends (...params: any[]) => Promise<any>>(
     f: F,
@@ -29,7 +32,7 @@ export function memoizeAsync<F extends (...params: any[]) => Promise<any>>(
 
     const memoizedFunc = obj[memoizedFuncName] as MemoizedFunc;
     /**
-     * manually call destroy func to avoid memory leak
+     * Manually call destroy func to avoid memory leak
      */
     memoizedFunc.destroy = () => {
         cache.clear();
@@ -38,33 +41,18 @@ export function memoizeAsync<F extends (...params: any[]) => Promise<any>>(
     return memoizedFunc;
 }
 
-export interface Asset {
-    gzip: number;
-    name: string;
-    size: number;
-    type: string;
-}
+export function colorizeSize(kb: number) {
+    if (Number.isNaN(kb)) return '';
 
-export interface DependencySize {
-    approximateSize: number;
-    name: string;
-}
-
-export interface GetPkgSizeResponseData {
-    assets: Asset[];
-    dependencyCount: number;
-    dependencySizes: DependencySize[];
-    description: string;
-    gzip: number;
-    hasJSModule: boolean;
-    hasJSNext: boolean;
-    hasSideEffects: boolean;
-    isModuleType: boolean;
-    name: string;
-    repository: string;
-    scoped: boolean;
-    size?: number;
-    version: string;
+    let colorFunc: (str: string) => string;
+    if (kb > 1000) {
+        colorFunc = c.red;
+    } else if (kb > 100) {
+        colorFunc = c.yellow;
+    } else {
+        colorFunc = c.green;
+    }
+    return `(${colorFunc(`${kb.toFixed(3)}kb`)})`;
 }
 
 export async function getPkgSize(name: string, version: string) {

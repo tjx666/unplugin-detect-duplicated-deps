@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { normalizePath } from '@rollup/pluginutils';
+import { highlight } from 'cardinal';
 import consola from 'consola';
 import c from 'picocolors';
 import { gt } from 'semver';
@@ -9,43 +10,8 @@ import type { RollupPlugin } from 'unplugin';
 import { createUnplugin } from 'unplugin';
 import { workspaceRoot } from 'workspace-root';
 
-import { memoizeAsync, getPkgSize as _getPkgSize } from './utils';
-
-export interface Options {
-    /**
-     * disable show package size can improve build speed because we get package size by api of https://bundlephobia.com/
-     * @default true
-     */
-    showPkgSize?: boolean;
-    /**
-     * useful in ci check
-     * @default false
-     */
-    throwErrorWhenDuplicated?: boolean;
-    /**
-     * @default {}
-     * @example
-     * ```javascript
-     * {
-     *     axios: ['0.17.4', '1.4.0']
-     * }
-     * ```
-     */
-    whitelist?: Record<string, string[]>;
-    customErrorMessage?: (
-        issuePackagesMap: Map<string, string[]>,
-        duplicatedDeps: Map<string, string[]>,
-    ) => string;
-    /**
-     * @default 'debug'
-     */
-    logLevel?: 'debug' | 'error';
-    /**
-     * whether report the duplicated dep depended by another dep
-     * @default true
-     */
-    deep?: boolean;
-}
+import type { Options } from './options';
+import { memoizeAsync, getPkgSize as _getPkgSize, colorizeSize } from './utils';
 
 const getWorkspaceRootFolder = memoizeAsync(async () => {
     let workspaceRootFolder = await workspaceRoot();
@@ -57,34 +23,14 @@ const getWorkspaceRootFolder = memoizeAsync(async () => {
 
 const getPkgSize = memoizeAsync(_getPkgSize, (name, version) => `${name}@${version}`);
 
-function colorizeSize(kb: number) {
-    if (Number.isNaN(kb)) return '';
-
-    let colorFunc: (str: string) => string;
-    if (kb > 1000) {
-        colorFunc = c.red;
-    } else if (kb > 100) {
-        colorFunc = c.yellow;
-    } else {
-        colorFunc = c.green;
-    }
-    return `(${colorFunc(`${kb.toFixed(3)}kb`)})`;
-}
-
-function sortVersions(versions: string[]) {
-    return versions.sort((a, b) => (gt(a, b) ? 1 : -1));
-}
-
 export default createUnplugin<Options | undefined>((options) => {
     const name = 'unplugin-detect-duplicated-deps';
 
-    let isVitePlugin = false;
     const {
         showPkgSize = true,
         throwErrorWhenDuplicated = false,
-        whitelist: whiteList = {},
+        ignoredDeps: whiteList = {},
         customErrorMessage,
-        logLevel = 'debug',
         deep = true,
     } = options ?? {};
 
@@ -99,7 +45,7 @@ export default createUnplugin<Options | undefined>((options) => {
                 importer = normalizePath(importer);
             }
 
-            if (importer && !deep && packagePathRegex.test(importer)) {
+            if (!deep && importer && packagePathRegex.test(importer)) {
                 return null;
             }
 
@@ -107,10 +53,10 @@ export default createUnplugin<Options | undefined>((options) => {
             if (match) {
                 const packageJsonPath = path.join(match[0], 'package.json');
                 try {
-                    const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
+                    const pkg = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
                     return {
-                        name: packageJson.name,
-                        version: packageJson.version,
+                        name: pkg.name,
+                        version: pkg.version,
                     };
                 } catch {
                     // some package publish dist with a folder named node_modules
@@ -124,28 +70,36 @@ export default createUnplugin<Options | undefined>((options) => {
     const formatImporter = memoizeAsync(async (importer: string) => {
         importer = normalizePath(importer);
 
-        let formattedImporter = importer;
         if (packagePathRegex.test(importer)) {
             const packageInfo = await getPackageInfo(importer);
             if (packageInfo) {
-                formattedImporter = `${packageInfo.name}@${packageInfo.version}`;
+                return `${packageInfo.name}@${packageInfo.version}`;
             }
         }
 
         const workspaceRootFolder = await getWorkspaceRootFolder();
-        if (workspaceRootFolder && formattedImporter.startsWith(workspaceRootFolder)) {
-            return formattedImporter.slice(workspaceRootFolder.length + 1);
+        if (workspaceRootFolder && importer.startsWith(workspaceRootFolder)) {
+            return importer.slice(workspaceRootFolder.length + 1);
         }
-        return formattedImporter;
+        return importer;
     });
 
     /**
-     * Map(1) {
-     *   'axios' => Map(2) {
-     *     '1.4.0' => Set(2) { 'tests/fixtures/mono/packages/pkg1/index.js', 'axios' },
-     *     '0.27.2' => Set(2) { 'tests/fixtures/mono/packages/pkg2/index.js', 'axios' }
-     *   }
-     * }
+     * @example
+     *     ```txt
+     *     Map(1) {
+     *         'axios' => Map(2) {
+     *             '1.4.0' => Set(2) {
+     *                 'tests/fixtures/mono/packages/pkg1/index.js',
+     *                 'axios'
+     *             },
+     *             '0.27.2' => Set(2) {
+     *                 'tests/fixtures/mono/packages/pkg2/index.js',
+     *                 'axios'
+     *             }
+     *         }
+     *     }
+     *     ```;
      */
     let packageToVersionsMap = new Map<string, Map<string, Set<string>>>();
 
@@ -156,55 +110,73 @@ export default createUnplugin<Options | undefined>((options) => {
             ...options,
             skipSelf: true,
         });
-        if (resolved) {
-            const packageInfo = await getPackageInfo(resolved.id, importer);
-            if (packageInfo) {
-                const { name, version } = packageInfo;
-                const formattedImporter = await formatImporter(importer);
-                const existedVersionsMap = packageToVersionsMap.get(name);
-                if (existedVersionsMap) {
-                    const existedImporters = existedVersionsMap.get(version);
-                    if (existedImporters) {
-                        existedImporters.add(formattedImporter);
-                    } else {
-                        existedVersionsMap.set(version, new Set([formattedImporter]));
-                    }
-                } else {
-                    const versionMap = new Map<string, Set<string>>([
-                        [version, new Set([formattedImporter])],
-                    ]);
-                    packageToVersionsMap.set(name, versionMap);
-                }
+        if (!resolved) return;
+
+        const packageInfo = await getPackageInfo(resolved.id, importer);
+        if (!packageInfo) return;
+
+        const { name, version } = packageInfo;
+        const formattedImporter = await formatImporter(importer);
+        const existedVersionsMap = packageToVersionsMap.get(name);
+        if (existedVersionsMap) {
+            const existedImporters = existedVersionsMap.get(version);
+            if (existedImporters) {
+                existedImporters.add(formattedImporter);
+            } else {
+                existedVersionsMap.set(version, new Set([formattedImporter]));
             }
+        } else {
+            const versionMap = new Map<string, Set<string>>([
+                [version, new Set([formattedImporter])],
+            ]);
+            packageToVersionsMap.set(name, versionMap);
         }
     };
 
     const buildEnd: RollupPlugin['buildEnd'] = async function () {
-        const duplicatedPackages: string[] = [];
         // sort by package name
         packageToVersionsMap = new Map(
-            [...packageToVersionsMap.entries()].sort((a, b) => (a[0] > b[0] ? 1 : -1)),
+            [...packageToVersionsMap.entries()].sort((a, b) => a[0].localeCompare(b[0])),
         );
+
         for (const [packageName, versionsMap] of packageToVersionsMap.entries()) {
-            if (versionsMap.size > 1) {
-                duplicatedPackages.push(packageName);
+            packageToVersionsMap.set(
+                packageName,
+                // sort by semver version
+                new Map([...versionsMap.entries()].sort((a, b) => (gt(a[0], b[0]) ? 1 : -1))),
+            );
+        }
+
+        const duplicatedDeps: Record<string, string[]> = {};
+        const issuePackagesMap = new Map<string, string[]>();
+        for (const [packageName, versionsMap] of packageToVersionsMap.entries()) {
+            if (versionsMap.size < 2) continue;
+
+            duplicatedDeps[packageName] = [...versionsMap.keys()];
+            for (const version of versionsMap.keys()) {
+                const pass = packageName in whiteList && whiteList[packageName].includes(version);
+                if (!pass) {
+                    const newIssueVersions = (issuePackagesMap.get(packageName) ?? []).sort(
+                        (a, b) => (gt(a, b) ? 1 : -1),
+                    );
+                    newIssueVersions.push(version);
+                    issuePackagesMap.set(packageName, newIssueVersions);
+                }
             }
         }
-        if (duplicatedPackages.length === 0) return;
+        if (issuePackagesMap.size === 0) return;
 
-        const formattedDuplicatedPackageNames = duplicatedPackages
+        const coloredDuplicatedPackageNames = [...issuePackagesMap.keys()]
             .map((name) => c.magenta(name))
             .join(', ');
-        const warningMessages = [
-            `multiple versions of ${formattedDuplicatedPackageNames} is bundled!`,
+        const outputMessages = [
+            `multiple versions of ${coloredDuplicatedPackageNames} is bundled!`,
         ];
 
-        const promises = duplicatedPackages.map(async (duplicatedPackage) => {
+        const promises = [...issuePackagesMap.keys()].map(async (duplicatedPackage) => {
             const warningMessagesOfPackage: string[] = [];
-            const sortedVersions = sortVersions([
-                ...packageToVersionsMap.get(duplicatedPackage)!.keys(),
-            ]);
             let longestVersionLength = Number.NEGATIVE_INFINITY;
+            const sortedVersions = issuePackagesMap.get(duplicatedPackage)!;
             sortedVersions.forEach((v) => {
                 if (v.length > longestVersionLength) {
                     longestVersionLength = v.length;
@@ -216,10 +188,10 @@ export default createUnplugin<Options | undefined>((options) => {
                 const importers = Array.from(
                     packageToVersionsMap.get(duplicatedPackage)!.get(version)!,
                 );
-                const formattedVersion = c.bold(
+                const colorizedVersion = c.bold(
                     c.yellow(version.padEnd(longestVersionLength, ' ')),
                 );
-                const formattedImporters = importers
+                const colorizedImporters = importers
                     .filter((importer) => importer !== `${duplicatedPackage}@${version}`)
                     .map((name) => c.green(name))
                     .join(', ');
@@ -227,9 +199,9 @@ export default createUnplugin<Options | undefined>((options) => {
                     const pkgSize = await getPkgSize(duplicatedPackage, version);
                     totalSize += pkgSize;
                     // prettier-ignore
-                    return `    - ${formattedVersion}${colorizeSize(pkgSize)} imported by ${formattedImporters}`;
+                    return `    - ${colorizedVersion}${colorizeSize(pkgSize)} imported by ${colorizedImporters}`;
                 } else {
-                    return `    - ${formattedVersion} imported by ${formattedImporters}`;
+                    return `    - ${colorizedVersion} imported by ${colorizedImporters}`;
                 }
             });
             warningMessagesOfPackage.push(...(await Promise.all(_promises)));
@@ -238,50 +210,25 @@ export default createUnplugin<Options | undefined>((options) => {
             );
             return warningMessagesOfPackage;
         });
-        warningMessages.push(...(await Promise.all(promises)).flat());
-
-        // remove vite output dim colorize
-        // eslint-disable-next-line unicorn/escape-case, unicorn/no-hex-escape
-        process.stdout.write(`\x1b[0m${isVitePlugin ? '\n' : ''}`);
-        if (logLevel === 'debug') {
-            consola.warn(warningMessages.join('\n'));
-        }
-
-        if (throwErrorWhenDuplicated) {
-            const issuePackagesMap = new Map<string, string[]>();
-            const duplicatedPackagesMap = new Map<string, string[]>();
-            for (const [packageName, versionsMap] of packageToVersionsMap.entries()) {
-                if (versionsMap.size < 2) continue;
-
-                duplicatedPackagesMap.set(packageName, sortVersions([...versionsMap.keys()]));
-                for (const version of versionsMap.keys()) {
-                    const pass =
-                        packageName in whiteList && whiteList[packageName].includes(version);
-                    if (!pass) {
-                        const newIssueVersions = issuePackagesMap.get(packageName) ?? [];
-                        newIssueVersions.push(version);
-                        issuePackagesMap.set(packageName, newIssueVersions);
-                    }
-                }
-
-                if (issuePackagesMap.has(packageName)) {
-                    sortVersions(issuePackagesMap.get(packageName)!);
-                }
-            }
-            const duplicatedDepsList = [...issuePackagesMap.entries()]
-                .map(([packageName, _versions]) => {
-                    const versions = _versions.map((version) => `v${version}`).join(', ');
-                    return `  - ${packageName}: ${versions}`;
-                })
-                .join('\n');
-
-            if (issuePackagesMap.size > 0) {
-                throw new Error(
-                    customErrorMessage
-                        ? customErrorMessage(issuePackagesMap, duplicatedPackagesMap)
-                        : `You can add following duplicated deps to whitelist option to suppress this error:\n${duplicatedDepsList}`,
+        outputMessages.push(...(await Promise.all(promises)).flat());
+        if (!throwErrorWhenDuplicated) {
+            consola.warn(outputMessages.join('\n'));
+        } else {
+            if (customErrorMessage) {
+                console.error(customErrorMessage(packageToVersionsMap));
+            } else {
+                consola.error(outputMessages.join('\n'));
+                consola.info(
+                    'Fix this error by eliminate the duplicated dependencies or adjust the ignoredDeps option.',
                 );
+                consola.info(
+                    `You can just copy following all duplicated dependencies as the value of ignoredDeps option:`,
+                );
+                console.log(`\n${highlight(JSON.stringify(duplicatedDeps, null, 4))}\n`);
             }
+
+            // eslint-disable-next-line unicorn/no-process-exit
+            process.exit(1);
         }
 
         // recycle cached promise
@@ -295,9 +242,6 @@ export default createUnplugin<Options | undefined>((options) => {
         name,
         vite: {
             enforce: 'pre',
-            config() {
-                isVitePlugin = true;
-            },
             resolveId,
             buildEnd,
         },
