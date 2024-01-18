@@ -33,20 +33,8 @@ test('vite esm', async () => {
     expect(result.stderr).toBe(stderr);
 });
 
-test('vite cjs', async () => {
-    const result = await exec('vite build -l error -c vite.config.cts');
-    expect(result.stdout).toBe(stdout);
-    expect(result.stderr).toBe(stderr);
-});
-
 test('rollup esm', async () => {
     const result = await exec('rollup --silent -c rollup.config.mjs');
-    expect(result.stdout).toBe(stdout);
-    expect(result.stderr).toBe(stderr);
-});
-
-test('rollup cjs', async () => {
-    const result = await exec('rollup --silent -c rollup.config.cjs');
     expect(result.stdout).toBe(stdout);
     expect(result.stderr).toBe(stderr);
 });

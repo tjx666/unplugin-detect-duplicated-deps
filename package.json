@@ -5,7 +5,10 @@
     "keywords": [
         "unplugin",
         "rollup",
-        "vite"
+        "vite",
+        "duplicated",
+        "repeat",
+        "dependencies"
     ],
     "license": "MIT",
     "homepage": "https://github.com/tjx666/unplugin-detect-duplicated-deps#readme",
@@ -17,15 +20,6 @@
         "url": "git+https://github.com/tjx666/unplugin-detect-duplicated-deps.git"
     },
     "author": "YuTengjing <ytj2713151713@gmail.com>",
-    "files": [
-        "dist"
-    ],
-    "engines": {
-        "node": ">=16.14.0"
-    },
-    "main": "./dist/index.js",
-    "module": "./dist/index.mjs",
-    "types": "./dist/index.d.ts",
     "maintainers": [
         {
             "name": "YuTengjing",
@@ -36,21 +30,27 @@
             "email": "mljsgto222@gmail.com"
         }
     ],
+    "type": "module",
+    "engines": {
+        "node": ">=18"
+    },
+    "files": [
+        "dist"
+    ],
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
-            "require": "./dist/index.js",
-            "import": "./dist/index.mjs"
+            "import": "./dist/index.js"
         },
         "./vite": {
             "types": "./dist/vite.d.ts",
-            "require": "./dist/vite.js",
-            "import": "./dist/vite.mjs"
+            "import": "./dist/vite.js"
         },
         "./rollup": {
             "types": "./dist/rollup.d.ts",
-            "require": "./dist/rollup.js",
-            "import": "./dist/rollup.mjs"
+            "import": "./dist/rollup.js"
         }
     },
     "typesVersions": {
@@ -64,17 +64,18 @@
         "registry": "https://registry.npmjs.org/",
         "access": "public"
     },
+    "eslintConfig": {
+        "extends": "@yutengjing/eslint-config-typescript"
+    },
+    "prettier": "@yutengjing/prettier-config",
     "scripts": {
         "lint": "eslint . --ext .vue,.js,.ts,.jsx,.tsx,.json,.md",
         "lint:fix": "pnpm run lint --fix",
-        "build": "tsup && tsx scripts/postbuild.mts",
+        "build": "tsup",
         "dev": "tsup --watch",
         "test": "vitest --test-timeout=10000",
         "release": "bumpp && pnpm publish",
         "prepublishOnly": "pnpm run build"
-    },
-    "peerDependencies": {
-        "vite": "^4"
     },
     "dependencies": {
         "@rollup/pluginutils": "^5.0.5",
@@ -86,20 +87,17 @@
         "workspace-root": "^3.2.0"
     },
     "devDependencies": {
-        "@types/node": "^18.18.4",
-        "@types/semver": "^7.5.3",
-        "@yutengjing/eslint-config-typescript": "^0.4.2",
-        "@yutengjing/prettier-config": "^0.0.1",
-        "bumpp": "^9.2.0",
-        "eslint": "^8.51.0",
-        "eslint-define-config": "^1.24.1",
+        "@types/node": "^18.19.8",
+        "@types/semver": "^7.5.6",
+        "@yutengjing/eslint-config-typescript": "^0.5.2",
+        "@yutengjing/prettier-config": "^1.0.0",
+        "eslint": "^8.56.0",
         "execa": "^8.0.1",
-        "fast-glob": "^3.3.1",
-        "prettier": "^3.0.3",
-        "tsup": "^7.2.0",
-        "tsx": "^3.13.0",
-        "typescript": "^5.2.2",
-        "vite": "^4.4.11",
-        "vitest": "^0.34.6"
+        "prettier": "^3.2.4",
+        "tsup": "^8.0.1",
+        "tsx": "^4.7.0",
+        "typescript": "^5.3.3",
+        "vite": "^5.0.11",
+        "vitest": "^1.2.1"
     }
 }
