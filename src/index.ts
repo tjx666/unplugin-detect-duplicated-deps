@@ -27,9 +27,9 @@ export default createUnplugin<Options | undefined>((options) => {
     const name = 'unplugin-detect-duplicated-deps';
 
     const {
+        ignore = {},
         showPkgSize = true,
         throwErrorWhenDuplicated = false,
-        ignoredDeps: whiteList = {},
         customErrorMessage,
         deep = true,
     } = options ?? {};
@@ -154,7 +154,9 @@ export default createUnplugin<Options | undefined>((options) => {
 
             duplicatedDeps[packageName] = [...versionsMap.keys()];
             for (const version of versionsMap.keys()) {
-                const pass = packageName in whiteList && whiteList[packageName].includes(version);
+                const pass =
+                    packageName in ignore &&
+                    (ignore[packageName].includes('*') || ignore[packageName].includes(version));
                 if (!pass) {
                     const newIssueVersions = (issuePackagesMap.get(packageName) ?? []).sort(
                         (a, b) => (gt(a, b) ? 1 : -1),
@@ -219,10 +221,10 @@ export default createUnplugin<Options | undefined>((options) => {
             } else {
                 consola.error(outputMessages.join('\n'));
                 consola.info(
-                    'Fix this error by eliminate the duplicated dependencies or adjust the ignoredDeps option.',
+                    `Fix this error by eliminate the duplicated dependencies or adjust the ${c.magenta('ignore')} option.`,
                 );
                 consola.info(
-                    `You can just copy following all duplicated dependencies as the value of ignoredDeps option:`,
+                    `You can just copy following all duplicated dependencies as the value of ${c.magenta('ignore')} option:`,
                 );
                 console.log(`\n${highlight(JSON.stringify(duplicatedDeps, null, 4))}\n`);
             }

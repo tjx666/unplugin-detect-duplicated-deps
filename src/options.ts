@@ -1,6 +1,6 @@
 export interface Options {
     /**
-     * Config the duplicated dependencies which will be ignored
+     * Config the duplicated dependencies which will be ignored, you can pass `*` as version to ignore all versions
      *
      * @example
      * ```javascript
@@ -10,7 +10,7 @@ export interface Options {
      *  ```
      * @default {}
      */
-    ignoredDeps?: Record<string, string[]>;
+    ignore?: Record<string, string[]>;
 
     /**
      * Disable show package size can improve build speed because we get package size by api of https://bundlephobia.com/
