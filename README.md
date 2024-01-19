@@ -9,7 +9,7 @@ Detect duplicate packaged dependencies
 ## Installation
 
 ```bash
-npm i -D unplugin-detect-duplicated-deps
+npm i -D unplugin-detect-duplicated-deps@0
 ```
 
 ## Usage
