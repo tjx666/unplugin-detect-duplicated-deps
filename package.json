@@ -80,7 +80,10 @@
         "dev": "tsup --watch",
         "test": "vitest --test-timeout=10000",
         "release": "bumpp && pnpm publish",
-        "prepublishOnly": "pnpm run build"
+        "prepublishOnly": "pnpm run build",
+        "docs:dev": "pnpm --filter docs exec vitepress dev .",
+        "docs:build": "pnpm --filter docs exec vitepress build .",
+        "docs:serve": "pnpm --filter docs exec vitepress serve ."
     },
     "dependencies": {
         "@rollup/pluginutils": "^5.1.0",
@@ -103,6 +106,7 @@
         "prettier": "^3.2.4",
         "tsup": "^8.0.1",
         "tsx": "^4.7.0",
+        "typedoc": "^0.25.7",
         "typescript": "^5.3.3",
         "vite": "^5.0.11",
         "vitest": "^1.2.1"

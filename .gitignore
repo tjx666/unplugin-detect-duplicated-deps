@@ -3,3 +3,6 @@ node_modules
 dist
 *.log
 .vercel
+
+docs/.vitepress/dist
+docs/.vitepress/cache

@@ -1,0 +1,8 @@
+{
+    "name": "docs",
+    "type": "module",
+    "dependencies": {
+        "vitepress": "1.0.0-rc.39",
+        "vue": "^3.4.15"
+    }
+}

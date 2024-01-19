@@ -87,16 +87,14 @@ export default createUnplugin<Options | undefined>((options) => {
     /**
      * @example
      *     ```txt
-     *     Map(1) {
+     *     Map(2) {
+     *         '@pixi/utils' => Map(2) {
+     *           '7.0.0' => Set(1) { 'tests/fixtures/mono/packages/pkg2/index.js' },
+     *           '7.2.4' => Set(1) { 'tests/fixtures/mono/packages/pkg1/index.js' }
+     *         },
      *         'axios' => Map(2) {
-     *             '1.4.0' => Set(2) {
-     *                 'tests/fixtures/mono/packages/pkg1/index.js',
-     *                 'axios'
-     *             },
-     *             '0.27.2' => Set(2) {
-     *                 'tests/fixtures/mono/packages/pkg2/index.js',
-     *                 'axios'
-     *             }
+     *           '0.27.2' => Set(1) { 'tests/fixtures/mono/packages/pkg2/index.js' },
+     *           '1.4.0' => Set(1) { 'tests/fixtures/mono/packages/pkg1/index.js' }
      *         }
      *     }
      *     ```;

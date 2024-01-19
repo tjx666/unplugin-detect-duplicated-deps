@@ -4,7 +4,7 @@
 
 Detect duplicate packaged dependencies
 
-![effect](docs/effect.png)
+![effect](./docs/images/effect.png)
 
 ## Installation
 

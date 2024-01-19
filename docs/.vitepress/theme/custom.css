@@ -1,0 +1,7 @@
+#VPContent div.VPHero.VPHomeHero .name {
+    white-space: nowrap;
+}
+
+#VPContent ._introduction > div > p > a {
+    display: inline-block;
+}
