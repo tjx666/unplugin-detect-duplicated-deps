@@ -1,6 +1,10 @@
 # Configuration
 
-view latest [source code](https://github.com/tjx666/unplugin-detect-duplicated-deps/blob/main/src/options.ts)
+view latest [source code](https://github.com/tjx666/unplugin-detect-duplicated-deps/blob/main/src/options.ts).
+
+::: tip
+You can use the `jsdoc` to check option `description` and `default value`.
+:::
 
 ````ts
 export interface Options {
