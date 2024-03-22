@@ -1,3 +1,16 @@
+## v1.1.0 (2024-03-22)
+
+### 🚀 Features
+
+- Upgrade deps ([b0da9c8](https://github.com/tjx666/unplugin-detect-duplicated-deps/commit/b0da9c8))
+- Support webpack ([7318b5c](https://github.com/tjx666/unplugin-detect-duplicated-deps/commit/7318b5c))
+
+### ❤️ Contributors
+
+- YuTengjing ([@tjx666](http://github.com/tjx666))
+
+[View changes on GitHub](https://github.com/tjx666/unplugin-detect-duplicated-deps/compare/v1.0.0...v1.1.0 (2024-03-22))
+
 ## v1.0.0 (2024-01-19)
 
 ### 🚀 Features
