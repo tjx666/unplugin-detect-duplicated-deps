@@ -31,6 +31,7 @@
         }
     ],
     "type": "module",
+    "packageManager": "pnpm@8.15.5",
     "engines": {
         "node": ">=18"
     },
@@ -68,10 +69,7 @@
         "extends": "@yutengjing/eslint-config-typescript",
         "ignorePatterns": [
             "tests/fixtures"
-        ],
-        "rules": {
-            "jsdoc/tag-lines": 0
-        }
+        ]
     },
     "scripts": {
         "lint": "eslint . --ext .vue,.js,.ts,.jsx,.tsx,.json,.md",
@@ -87,29 +85,28 @@
     },
     "dependencies": {
         "@rollup/pluginutils": "^5.1.0",
-        "axios": "^1.6.5",
+        "axios": "^1.6.8",
         "cardinal": "^2.1.1",
         "consola": "^3.2.3",
         "picocolors": "^1.0.0",
-        "semver": "^7.5.4",
-        "unplugin": "^1.6.0",
+        "semver": "^7.6.0",
+        "unplugin": "^1.10.0",
         "workspace-root": "^3.2.0"
     },
     "devDependencies": {
         "@types/cardinal": "^2.1.1",
-        "@types/node": "^18.19.8",
-        "@types/semver": "^7.5.6",
-        "@yutengjing/eslint-config-typescript": "^0.5.2",
-        "@yutengjing/prettier-config": "^1.0.0",
+        "@types/node": "^18.19.26",
+        "@types/semver": "^7.5.8",
+        "@yutengjing/eslint-config-typescript": "^0.6.0",
+        "@yutengjing/prettier-config": "^1.1.2",
         "@yutengjing/release": "^0.2.0",
-        "eslint": "^8.56.0",
+        "eslint": "^8.57.0",
         "execa": "^8.0.1",
-        "prettier": "^3.2.4",
-        "tsup": "^8.0.1",
-        "tsx": "^4.7.0",
-        "typedoc": "^0.25.7",
-        "typescript": "^5.3.3",
-        "vite": "^5.0.11",
-        "vitest": "^1.2.1"
+        "prettier": "^3.2.5",
+        "tsup": "^8.0.2",
+        "tsx": "^4.7.1",
+        "typescript": "^5.4.3",
+        "vite": "^5.2.2",
+        "vitest": "^1.4.0"
     }
 }

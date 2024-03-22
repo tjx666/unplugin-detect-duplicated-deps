@@ -5,7 +5,7 @@ export default defineConfig({
     plugins: [
         UnpluginDetectDuplicatedDeps({
             showPkgSize: false,
-            deep: false
+            deep: false,
         }),
     ],
 });

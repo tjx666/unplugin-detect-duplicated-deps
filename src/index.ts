@@ -11,7 +11,7 @@ import { createUnplugin } from 'unplugin';
 import { workspaceRoot } from 'workspace-root';
 
 import type { Options } from './options';
-import { memoizeAsync, getPkgSize as _getPkgSize, colorizeSize } from './utils';
+import { colorizeSize, getPkgSize as _getPkgSize, memoizeAsync } from './utils';
 
 const getWorkspaceRootFolder = memoizeAsync(async () => {
     let workspaceRootFolder = await workspaceRoot();
