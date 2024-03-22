@@ -1,3 +1,9 @@
+## v1.1.1 (2024-03-22)
+
+No significant changes
+
+[View changes on GitHub](https://github.com/tjx666/unplugin-detect-duplicated-deps/compare/v1.1.0...v1.1.1 (2024-03-22))
+
 ## v1.1.0 (2024-03-22)
 
 ### 🚀 Features
