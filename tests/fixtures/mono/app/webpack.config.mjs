@@ -1,13 +1,11 @@
 import unpluginDetectDuplicatedDeps from 'unplugin-detect-duplicated-deps/webpack';
-import { resolve } from 'path';
 
 /** @type {import('webpack').Configuration} */
 const config = {
-    entry: resolve(import.meta.dirname, './index.js'),
+    entry: './index.js',
     mode: 'production',
-    stats: 'none',
+    stats: 'errors-only',
     output: {
-        path: resolve(import.meta.dirname, './dist'),
         filename: 'bundle.mjs',
         libraryTarget: 'module',
     },
