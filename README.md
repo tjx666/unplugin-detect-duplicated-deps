@@ -28,7 +28,8 @@ export default defineConfig({
 });
 ```
 
-<br></details>
+<br>
+</details>
 
 <details>
 <summary>Rollup</summary><br>
@@ -42,7 +43,24 @@ export default {
 };
 ```
 
-<br></details>
+<br>
+</details>
+
+<details>
+<summary>Webpack</summary><br>
+
+```ts
+// webpack.config.mjs
+import UnpluginDetectDuplicatedDeps from 'unplugin-detect-duplicated-deps/webpack';
+
+const config = {
+  plugins: [UnpluginDetectDuplicatedDeps()],
+};
+export default config;
+```
+
+<br>
+</details>
 
 ## Use in commonjs environment
 

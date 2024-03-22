@@ -16,7 +16,7 @@ bun add -D unplugin-detect-duplicated-deps
 
 ## Add to config file
 
-### Vit
+### Vite
 
 ```ts
 // vite.config.ts
@@ -36,6 +36,18 @@ import UnpluginDetectDuplicatedDeps from 'unplugin-detect-duplicated-deps/rollup
 export default {
   plugins: [UnpluginDetectDuplicatedDeps()],
 };
+```
+
+### Webpack
+
+```ts
+// webpack.config.mjs
+import UnpluginDetectDuplicatedDeps from 'unplugin-detect-duplicated-deps/webpack';
+
+const config = {
+  plugins: [UnpluginDetectDuplicatedDeps()],
+};
+export default config;
 ```
 
 ::: warning
