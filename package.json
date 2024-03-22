@@ -52,6 +52,10 @@
         "./rollup": {
             "types": "./dist/rollup.d.ts",
             "import": "./dist/rollup.js"
+        },
+        "./webpack": {
+            "types": "./dist/webpack.d.ts",
+            "import": "./dist/webpack.js"
         }
     },
     "typesVersions": {

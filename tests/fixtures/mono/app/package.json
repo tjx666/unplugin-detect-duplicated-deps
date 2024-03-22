@@ -6,6 +6,7 @@
         "build:rollup:esm": "pnpm clean && rollup -c rollup.config.mjs",
         "build:vite:throw-error": "pnpm clean && vite build -c vite.config.throw-error.mts",
         "build:vite:disable-show-pkg-size": "pnpm clean && vite build -c vite.config.disable-show-pkg-size.mts",
+        "build:webpack": "pnpm clean && webpack",
         "build": "pnpm build:vite:esm && pnpm build:vite:cjs && pnpm build:rollup:esm && pnpm build:rollup:cjs && pnpm build:vite:disable-show-pkg-size"
     },
     "dependencies": {
@@ -20,6 +21,8 @@
         "rimraf": "^5.0.5",
         "rollup": "^4.9.5",
         "unplugin-detect-duplicated-deps": "workspace:*",
-        "vite": "^5.0.11"
+        "vite": "^5.0.11",
+        "webpack": "^5.91.0",
+        "webpack-cli": "^5.1.4"
     }
 }

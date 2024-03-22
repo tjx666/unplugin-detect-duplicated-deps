@@ -6,7 +6,7 @@ import { highlight } from 'cardinal';
 import consola from 'consola';
 import c from 'picocolors';
 import { gt } from 'semver';
-import type { RollupPlugin } from 'unplugin';
+import type { RollupPlugin, UnpluginOptions } from 'unplugin';
 import { createUnplugin } from 'unplugin';
 import { workspaceRoot } from 'workspace-root';
 
@@ -101,16 +101,8 @@ export default createUnplugin<Options | undefined>((options) => {
      */
     let packageToVersionsMap = new Map<string, Map<string, Set<string>>>();
 
-    const resolveId: RollupPlugin['resolveId'] = async function (source, importer, options) {
-        if (!importer || options.isEntry) return;
-
-        const resolved = await this.resolve(source, importer, {
-            ...options,
-            skipSelf: true,
-        });
-        if (!resolved) return;
-
-        const packageInfo = await getPackageInfo(resolved.id, importer);
+    const parseModule = async (resolvedId: string, importer: string): Promise<undefined> => {
+        const packageInfo = await getPackageInfo(resolvedId, importer);
         if (!packageInfo) return;
 
         const { name, version } = packageInfo;
@@ -131,7 +123,23 @@ export default createUnplugin<Options | undefined>((options) => {
         }
     };
 
-    const buildEnd: RollupPlugin['buildEnd'] = async function () {
+    const resolveId: RollupPlugin['resolveId'] = async function (
+        source,
+        importer,
+        options,
+    ): Promise<undefined> {
+        if (!importer || options.isEntry) return;
+
+        const resolved = await this.resolve(source, importer, {
+            ...options,
+            skipSelf: true,
+        });
+        if (!resolved) return;
+
+        return parseModule(resolved.id, importer);
+    };
+
+    const buildEnd: UnpluginOptions['buildEnd'] = async function () {
         // sort by package name
         packageToVersionsMap = new Map(
             [...packageToVersionsMap.entries()].sort((a, b) => a[0].localeCompare(b[0])),
@@ -141,7 +149,14 @@ export default createUnplugin<Options | undefined>((options) => {
             packageToVersionsMap.set(
                 packageName,
                 // sort by semver version
-                new Map([...versionsMap.entries()].sort((a, b) => (gt(a[0], b[0]) ? 1 : -1))),
+                new Map(
+                    [...versionsMap.entries()]
+                        .sort((a, b) => (gt(a[0], b[0]) ? 1 : -1))
+                        .map(([version, importerSet]) => {
+                            // sort importers
+                            return [version, new Set([...importerSet].sort())];
+                        }),
+                ),
             );
         }
 
@@ -156,9 +171,7 @@ export default createUnplugin<Options | undefined>((options) => {
                     packageName in ignore &&
                     (ignore[packageName].includes('*') || ignore[packageName].includes(version));
                 if (!pass) {
-                    const newIssueVersions = (issuePackagesMap.get(packageName) ?? []).sort(
-                        (a, b) => (gt(a, b) ? 1 : -1),
-                    );
+                    const newIssueVersions = issuePackagesMap.get(packageName) ?? [];
                     newIssueVersions.push(version);
                     issuePackagesMap.set(packageName, newIssueVersions);
                 }
@@ -172,7 +185,6 @@ export default createUnplugin<Options | undefined>((options) => {
         const outputMessages = [
             `multiple versions of ${coloredDuplicatedPackageNames} is bundled!`,
         ];
-
         const promises = [...issuePackagesMap.keys()].map(async (duplicatedPackage) => {
             const warningMessagesOfPackage: string[] = [];
             let longestVersionLength = Number.NEGATIVE_INFINITY;
@@ -211,6 +223,8 @@ export default createUnplugin<Options | undefined>((options) => {
             return warningMessagesOfPackage;
         });
         outputMessages.push(...(await Promise.all(promises)).flat());
+
+        // output
         if (!throwErrorWhenDuplicated) {
             consola.warn(outputMessages.join('\n'));
         } else {
@@ -240,14 +254,40 @@ export default createUnplugin<Options | undefined>((options) => {
 
     return {
         name,
+        buildEnd,
         vite: {
             enforce: 'pre',
             resolveId,
-            buildEnd,
         },
         rollup: {
             resolveId,
-            buildEnd,
+        },
+        webpack(compiler) {
+            compiler.hooks.normalModuleFactory.tap(
+                `${name}.normalModuleFactory`,
+                (normalModuleFactory) => {
+                    normalModuleFactory.hooks.afterResolve.tapAsync(
+                        `${name}.normalModuleFactory.afterResolve`,
+                        (data, callback) => {
+                            const importer = data.contextInfo.issuer;
+                            const resolvedId = data.createData.resource;
+                            if (importer && resolvedId) {
+                                parseModule(resolvedId, importer)
+                                    .then(() => {
+                                        // eslint-disable-next-line promise/no-callback-in-promise
+                                        callback(null);
+                                    })
+                                    .catch((error) => {
+                                        // eslint-disable-next-line promise/no-callback-in-promise
+                                        callback(error);
+                                    });
+                            } else {
+                                callback(null);
+                            }
+                        },
+                    );
+                },
+            );
         },
     };
 });
