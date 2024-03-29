@@ -101,7 +101,7 @@
         "@types/cardinal": "^2.1.1",
         "@types/node": "^18.19.26",
         "@types/semver": "^7.5.8",
-        "@yutengjing/eslint-config-typescript": "^0.6.2",
+        "@yutengjing/eslint-config-typescript": "^0.7.0",
         "@yutengjing/prettier-config": "^1.2.0",
         "@yutengjing/release": "^0.2.0",
         "eslint": "^8.57.0",

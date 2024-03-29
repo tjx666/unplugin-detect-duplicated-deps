@@ -17,6 +17,7 @@
         "@rollup/plugin-commonjs": "^25.0.7",
         "@rollup/plugin-json": "^6.1.0",
         "@rollup/plugin-node-resolve": "^15.2.3",
+        "rollup-plugin-visualizer": "5.8.0",
         "axios": "^1.4.0",
         "rimraf": "^5.0.5",
         "rollup": "^4.13.0",

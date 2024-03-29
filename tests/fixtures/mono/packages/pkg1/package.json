@@ -3,6 +3,8 @@
     "main": "index.js",
     "dependencies": {
         "@pixi/utils": "7.2.4",
-        "axios": "^1.4.0"
+        "axios": "^1.4.0",
+        "vue": "^2.6.14",
+        "@yutengjing/foo": "1.0.3"
     }
 }
