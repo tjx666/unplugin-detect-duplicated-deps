@@ -125,7 +125,7 @@ export const getPackageInfo = memoizeAsync(
                 return {
                     name: pkg.name,
                     version: pkg.version,
-                    directory: path.dirname(packageJsonPath),
+                    directory: normalizePath(path.dirname(packageJsonPath)),
                 };
             } catch {
                 // some package publish dist with a folder named node_modules
