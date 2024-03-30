@@ -230,7 +230,7 @@ export default createUnplugin<Options | undefined>((options) => {
                 consola.info(
                     `You can just copy following all duplicated dependencies as the value of ${c.magenta('ignore')} option:`,
                 );
-                console.log(`\n${highlight(JSON.stringify(duplicatedDeps, null, 4))}\n`);
+                console.error(`\n${highlight(JSON.stringify(duplicatedDeps, null, 4))}\n`);
             }
 
             // eslint-disable-next-line unicorn/no-process-exit

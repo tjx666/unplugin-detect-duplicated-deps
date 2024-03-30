@@ -13,6 +13,7 @@ const exec = async (command: string) => {
     const result = await execa(cmd, args, {
         cwd: testCwd,
         preferLocal: true,
+        reject: false,
         env: {
             NO_COLOR: 'true',
         },
@@ -58,5 +59,12 @@ test('no pkg size', async () => {
     expect(result.stdout).toBe(stdout);
     const stderrPath = resolve(testCwd, 'no-pkg-size.txt');
     // await fs.writeFile(stderrPath, result.stderr, 'utf8');
+    expect(result.stderr).toBe(await fs.readFile(stderrPath, 'utf8'));
+});
+
+test('use in ci check', async () => {
+    const result = await exec('vite build -c vite.config.throw-error.mts');
+    const stderrPath = resolve(testCwd, 'ci-check-error.txt');
+    await fs.writeFile(stderrPath, result.stderr, 'utf8');
     expect(result.stderr).toBe(await fs.readFile(stderrPath, 'utf8'));
 });

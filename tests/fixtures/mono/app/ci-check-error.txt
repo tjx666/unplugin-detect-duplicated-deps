@@ -1,0 +1,43 @@
+[error] packages @pixi/constants, @pixi/settings, @pixi/utils, @yutengjing/foo, axios is bundled multiple times, fix them can reduce the bundle size by 52.386kb
+
+  @pixi/constants(10.934kb):
+    - 7.0.0(5.467kb) imported by @pixi/settings@7.0.0, @pixi/utils@7.0.0
+    - 7.2.4(5.467kb) imported by @pixi/utils@7.2.4
+
+  @pixi/settings(10.884kb):
+    - 7.0.0(8.134kb) imported by @pixi/utils@7.0.0
+    - 7.2.4(2.750kb) imported by @pixi/utils@7.2.4
+
+  @pixi/utils(82.901kb):
+    - 7.0.0(38.550kb) imported by tests/fixtures/mono/packages/pkg2/index.js
+    - 7.2.4(44.351kb) imported by tests/fixtures/mono/packages/pkg1/index.js
+
+  @yutengjing/foo(0.470kb):
+    - 1.0.3(0.235kb)
+      - node_modules/.pnpm/@yutengjing+foo@1.0.3_vue@2.6.14/node_modules/@yutengjing/foo imported by tests/fixtures/mono/packages/pkg1/index.js
+      - node_modules/.pnpm/@yutengjing+foo@1.0.3_vue@2.7.16/node_modules/@yutengjing/foo imported by tests/fixtures/mono/packages/pkg2/index.js
+
+  axios(30.218kb):
+    - 1.4.0(30.218kb) imported by tests/fixtures/mono/packages/pkg1/index.js
+
+[33m{[39m
+    [32m"@pixi/constants"[39m[93m:[39m [33m[[39m
+        [92m"7.0.0"[39m[32m,[39m
+        [92m"7.2.4"[39m
+    [33m][39m[32m,[39m
+    [32m"@pixi/settings"[39m[93m:[39m [33m[[39m
+        [92m"7.0.0"[39m[32m,[39m
+        [92m"7.2.4"[39m
+    [33m][39m[32m,[39m
+    [32m"@pixi/utils"[39m[93m:[39m [33m[[39m
+        [92m"7.0.0"[39m[32m,[39m
+        [92m"7.2.4"[39m
+    [33m][39m[32m,[39m
+    [32m"@yutengjing/foo"[39m[93m:[39m [33m[[39m
+        [92m"1.0.3"[39m
+    [33m][39m[32m,[39m
+    [32m"axios"[39m[93m:[39m [33m[[39m
+        [92m"0.27.2"[39m[32m,[39m
+        [92m"1.4.0"[39m
+    [33m][39m
+[33m}[39m

@@ -1,14 +1,14 @@
 [warn] packages @pixi/utils, @yutengjing/foo, axios is bundled multiple times, fix them can reduce the bundle size by 58.443kb
 
-  @pixi/utils(82.901kb}):
-    - 7.0.0(38.550kb}) imported by tests/fixtures/mono/packages/pkg2/index.js
-    - 7.2.4(44.351kb}) imported by tests/fixtures/mono/packages/pkg1/index.js
+  @pixi/utils(82.901kb):
+    - 7.0.0(38.550kb) imported by tests/fixtures/mono/packages/pkg2/index.js
+    - 7.2.4(44.351kb) imported by tests/fixtures/mono/packages/pkg1/index.js
 
-  @yutengjing/foo(0.470kb}):
-    - 1.0.3(0.235kb})
+  @yutengjing/foo(0.470kb):
+    - 1.0.3(0.235kb)
       - node_modules/.pnpm/@yutengjing+foo@1.0.3_vue@2.6.14/node_modules/@yutengjing/foo imported by tests/fixtures/mono/packages/pkg1/index.js
       - node_modules/.pnpm/@yutengjing+foo@1.0.3_vue@2.7.16/node_modules/@yutengjing/foo imported by tests/fixtures/mono/packages/pkg2/index.js
 
-  axios(49.876kb}):
-    - 0.27.2(19.658kb}) imported by tests/fixtures/mono/packages/pkg2/index.js
-    - 1.4.0 (30.218kb}) imported by tests/fixtures/mono/packages/pkg1/index.js
+  axios(49.876kb):
+    - 0.27.2(19.658kb) imported by tests/fixtures/mono/packages/pkg2/index.js
+    - 1.4.0 (30.218kb) imported by tests/fixtures/mono/packages/pkg1/index.js
