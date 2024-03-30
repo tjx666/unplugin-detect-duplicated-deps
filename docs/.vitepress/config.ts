@@ -14,6 +14,7 @@ export default defineConfig({
                     { text: 'Introduction', link: '/introduction.md' },
                     { text: 'Getting Started', link: '/getting-started.md' },
                     { text: 'Configuration', link: '/configuration.md' },
+                    { text: 'Recommend Readings', link: '/recommend-readings.md' },
                 ],
             },
         ],
