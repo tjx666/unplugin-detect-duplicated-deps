@@ -46,7 +46,7 @@ export function memoizeAsync<F extends (...params: any[]) => Promise<any>>(
     return memoizedFunc;
 }
 
-export function colorizeSize(kb: number) {
+export function colorizeSize(kb: number, bracket = true) {
     if (Number.isNaN(kb)) return '';
 
     let colorFunc: (str: string) => string;
@@ -57,7 +57,8 @@ export function colorizeSize(kb: number) {
     } else {
         colorFunc = c.green;
     }
-    return `(${colorFunc(`${kb.toFixed(3)}kb`)})`;
+    const colored = colorFunc(`${kb.toFixed(3)}kb`);
+    return bracket ? `(${colored})` : colored;
 }
 
 export const getWorkspaceRootFolder = memoizeAsync(async () => {

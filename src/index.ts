@@ -145,6 +145,7 @@ export default createUnplugin<Options | undefined>((options) => {
         const outputMessages = [
             `${resetTerminalDim}packages ${coloredDuplicatedPackageNames} is bundled multiple times!`,
         ];
+        let optimizedSize = 0;
         const promises = [...issuePackagesMap.keys()].map(async (duplicatedPackage) => {
             const warningMessagesOfPackage: string[] = [];
             let longestVersionLength = Number.NEGATIVE_INFINITY;
@@ -156,7 +157,7 @@ export default createUnplugin<Options | undefined>((options) => {
             });
 
             let totalSize = 0;
-            const _promises = versions.map(async (version) => {
+            const _promises = versions.map(async (version, index) => {
                 const directoryMap = packagesInfo.get(duplicatedPackage)!.get(version)!;
 
                 let versionAndSize = c.bold(c.yellow(version.padEnd(longestVersionLength, ' ')));
@@ -164,6 +165,12 @@ export default createUnplugin<Options | undefined>((options) => {
                     const pkgSize = await getPkgSize(duplicatedPackage, version);
                     totalSize += pkgSize * directoryMap.size;
                     versionAndSize += colorizeSize(pkgSize);
+
+                    if (index !== versions.length - 1) {
+                        optimizedSize += pkgSize * directoryMap.size;
+                    } else {
+                        optimizedSize += pkgSize * (directoryMap.size - 1);
+                    }
                 }
 
                 const getColorizedImporters = (importers: string[]) => {
@@ -204,6 +211,10 @@ export default createUnplugin<Options | undefined>((options) => {
             return warningMessagesOfPackage;
         });
         outputMessages.push(...(await Promise.all(promises)).flat());
+
+        if (showPkgSize) {
+            outputMessages[0] = `${outputMessages[0].slice(0, -1)}, fix them can reduce the bundle size by ${colorizeSize(optimizedSize, false)}`;
+        }
 
         // output
         if (!throwErrorWhenDuplicated) {
