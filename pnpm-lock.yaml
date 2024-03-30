@@ -132,13 +132,13 @@ importers:
         version: 7.2.4
       '@yutengjing/foo':
         specifier: 1.0.3
-        version: 1.0.3(vue@2.7.16)
+        version: 1.0.3(vue@2.6.14)
       axios:
         specifier: ^1.4.0
         version: 1.4.0
       vue:
-        specifier: ^2.6.14
-        version: 2.7.16
+        specifier: 2.6.14
+        version: 2.6.14
 
   tests/fixtures/mono/packages/pkg2:
     dependencies:
@@ -152,7 +152,7 @@ importers:
         specifier: ^0.27.2
         version: 0.27.2
       vue:
-        specifier: ^2.7.16
+        specifier: 2.7.16
         version: 2.7.16
 
 packages:
@@ -2112,6 +2112,14 @@ packages:
       autocorrect-node: 2.9.0
       eslint: 8.57.0
     dev: true
+
+  /@yutengjing/foo@1.0.3(vue@2.6.14):
+    resolution: {integrity: sha512-EEKpuCY7fd+a9eLlgZ/uX4rmP5CJiNjzwnqX39aiff61ybRkg5kiLqRWPr2y9I0aBkvMnEyQd/rzl91U/fDRyw==}
+    peerDependencies:
+      vue: ^2.7.16
+    dependencies:
+      vue: 2.6.14
+    dev: false
 
   /@yutengjing/foo@1.0.3(vue@2.7.16):
     resolution: {integrity: sha512-EEKpuCY7fd+a9eLlgZ/uX4rmP5CJiNjzwnqX39aiff61ybRkg5kiLqRWPr2y9I0aBkvMnEyQd/rzl91U/fDRyw==}
@@ -6813,6 +6821,11 @@ packages:
         optional: true
     dependencies:
       vue: 3.4.21(typescript@5.4.3)
+    dev: false
+
+  /vue@2.6.14:
+    resolution: {integrity: sha512-x2284lgYvjOMj3Za7kqzRcUSxBboHqtgRE2zlos1qWaOye5yUmHn42LB1250NJBLRwEcdrB0JRwyPTEPhfQjiQ==}
+    deprecated: Vue 2 has reached EOL and is no longer actively maintained. See https://v2.vuejs.org/eol/ for more details.
     dev: false
 
   /vue@2.7.16:

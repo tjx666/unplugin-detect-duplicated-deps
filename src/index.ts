@@ -1,27 +1,19 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
-
-import { normalizePath } from '@rollup/pluginutils';
 import { highlight } from 'cardinal';
 import consola from 'consola';
 import c from 'picocolors';
-import { gt } from 'semver';
+import { compare } from 'semver';
 import type { RollupPlugin, UnpluginOptions } from 'unplugin';
 import { createUnplugin } from 'unplugin';
-import { workspaceRoot } from 'workspace-root';
 
-import type { Options } from './options';
-import { colorizeSize, getPkgSize as _getPkgSize, memoizeAsync } from './utils';
-
-const getWorkspaceRootFolder = memoizeAsync(async () => {
-    let workspaceRootFolder = await workspaceRoot();
-    if (workspaceRootFolder) {
-        workspaceRootFolder = normalizePath(workspaceRootFolder);
-    }
-    return workspaceRootFolder;
-});
-
-const getPkgSize = memoizeAsync(_getPkgSize, (name, version) => `${name}@${version}`);
+import type { Options, PackagesInfo } from './options';
+import {
+    colorizeSize,
+    formatImporter,
+    getPackageInfo,
+    getPkgSize,
+    getWorkspaceRootFolder,
+    relativeToWorkspace,
+} from './utils';
 
 export default createUnplugin<Options | undefined>((options) => {
     const name = 'unplugin-detect-duplicated-deps';
@@ -34,92 +26,31 @@ export default createUnplugin<Options | undefined>((options) => {
         deep = true,
     } = options ?? {};
 
-    const packagePathRegex = /.*\/node_modules\/(?:@[^/]+\/)?[^/]+/;
-    const getPackageInfo: ((
-        id: string,
-        importer?: string,
-    ) => Promise<{ name: string; version: string } | null>) & { destroy: () => void } =
-        memoizeAsync(async (id: string, importer?: string) => {
-            id = normalizePath(id);
-            if (importer) {
-                importer = normalizePath(importer);
-            }
-
-            if (!deep && importer && packagePathRegex.test(importer)) {
-                return null;
-            }
-
-            const match = id.match(packagePathRegex);
-            if (match) {
-                const packageJsonPath = path.join(match[0], 'package.json');
-                try {
-                    const pkg = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
-                    return {
-                        name: pkg.name,
-                        version: pkg.version,
-                    };
-                } catch {
-                    // some package publish dist with a folder named node_modules
-                    const realPackagePath = id.slice(0, id.lastIndexOf('node_modules'));
-                    return getPackageInfo(realPackagePath, importer);
-                }
-            }
-            return null;
-        });
-
-    const formatImporter = memoizeAsync(async (importer: string) => {
-        importer = normalizePath(importer);
-
-        if (packagePathRegex.test(importer)) {
-            const packageInfo = await getPackageInfo(importer);
-            if (packageInfo) {
-                return `${packageInfo.name}@${packageInfo.version}`;
-            }
-        }
-
-        const workspaceRootFolder = await getWorkspaceRootFolder();
-        if (workspaceRootFolder && importer.startsWith(workspaceRootFolder)) {
-            return importer.slice(workspaceRootFolder.length + 1);
-        }
-        return importer;
-    });
-
-    /**
-     * @example
-     *     ```txt
-     *     Map(2) {
-     *         '@pixi/utils' => Map(2) {
-     *           '7.0.0' => Set(1) { 'tests/fixtures/mono/packages/pkg2/index.js' },
-     *           '7.2.4' => Set(1) { 'tests/fixtures/mono/packages/pkg1/index.js' }
-     *         },
-     *         'axios' => Map(2) {
-     *           '0.27.2' => Set(1) { 'tests/fixtures/mono/packages/pkg2/index.js' },
-     *           '1.4.0' => Set(1) { 'tests/fixtures/mono/packages/pkg1/index.js' }
-     *         }
-     *     }
-     *     ```;
-     */
-    let packageToVersionsMap = new Map<string, Map<string, Set<string>>>();
+    let packagesInfo: PackagesInfo = new Map();
 
     const parseModule = async (resolvedId: string, importer: string): Promise<undefined> => {
-        const packageInfo = await getPackageInfo(resolvedId, importer);
+        const packageInfo = await getPackageInfo(resolvedId, deep, importer);
         if (!packageInfo) return;
 
-        const { name, version } = packageInfo;
-        const formattedImporter = await formatImporter(importer);
-        const existedVersionsMap = packageToVersionsMap.get(name);
-        if (existedVersionsMap) {
-            const existedImporters = existedVersionsMap.get(version);
-            if (existedImporters) {
-                existedImporters.add(formattedImporter);
+        const { name, version, directory } = packageInfo;
+        const formattedImporter = await formatImporter(importer, deep);
+        const versionMap = packagesInfo.get(name);
+        if (versionMap) {
+            const directoryMap = versionMap.get(version);
+            if (directoryMap) {
+                if (directoryMap.has(directory)) {
+                    directoryMap.get(directory)!.add(formattedImporter);
+                } else {
+                    directoryMap.set(directory, new Set([formattedImporter]));
+                }
             } else {
-                existedVersionsMap.set(version, new Set([formattedImporter]));
+                versionMap.set(version, new Map([[directory, new Set([formattedImporter])]]));
             }
         } else {
-            const versionMap = new Map<string, Set<string>>([
-                [version, new Set([formattedImporter])],
+            const versionMap = new Map([
+                [version, new Map([[directory, new Set([formattedImporter])]])],
             ]);
-            packageToVersionsMap.set(name, versionMap);
+            packagesInfo.set(name, versionMap);
         }
     };
 
@@ -140,33 +71,56 @@ export default createUnplugin<Options | undefined>((options) => {
     };
 
     const buildEnd: UnpluginOptions['buildEnd'] = async function () {
-        // sort by package name
-        packageToVersionsMap = new Map(
-            [...packageToVersionsMap.entries()].sort((a, b) => a[0].localeCompare(b[0])),
+        // sort
+        packagesInfo = new Map(
+            [...packagesInfo.entries()]
+                // sort by package name
+                .sort((a, b) => a[0].localeCompare(b[0]))
+                .map(([name, versionMap]) => {
+                    return [
+                        name,
+                        new Map(
+                            [...versionMap.entries()]
+                                // sort by semver version
+                                .sort((a, b) => compare(a[0], b[0]))
+                                .map(([version, directoryMap]) => {
+                                    return [
+                                        version,
+                                        new Map(
+                                            [...directoryMap.entries()]
+                                                // sort by directory
+                                                .sort((a, b) => a[0].localeCompare(b[0]))
+                                                .map(([directory, importers]) => {
+                                                    return [
+                                                        directory,
+                                                        new Set(
+                                                            // sort by importer
+                                                            [...importers].sort((a, b) =>
+                                                                a.localeCompare(b),
+                                                            ),
+                                                        ),
+                                                    ];
+                                                }),
+                                        ),
+                                    ];
+                                }),
+                        ),
+                    ];
+                }),
         );
 
-        for (const [packageName, versionsMap] of packageToVersionsMap.entries()) {
-            packageToVersionsMap.set(
-                packageName,
-                // sort by semver version
-                new Map(
-                    [...versionsMap.entries()]
-                        .sort((a, b) => (gt(a[0], b[0]) ? 1 : -1))
-                        .map(([version, importerSet]) => {
-                            // sort importers
-                            return [version, new Set([...importerSet].sort())];
-                        }),
-                ),
-            );
-        }
-
+        // analyze duplicated packages
         const duplicatedDeps: Record<string, string[]> = {};
         const issuePackagesMap = new Map<string, string[]>();
-        for (const [packageName, versionsMap] of packageToVersionsMap.entries()) {
-            if (versionsMap.size < 2) continue;
+        for (const [packageName, versionMap] of packagesInfo.entries()) {
+            // multiple versions, or one version and multiple directories
+            const isDuplicated =
+                versionMap.size > 1 ||
+                (versionMap.size === 1 && [...versionMap.values()][0].size > 1);
+            if (!isDuplicated) continue;
 
-            duplicatedDeps[packageName] = [...versionsMap.keys()];
-            for (const version of versionsMap.keys()) {
+            duplicatedDeps[packageName] = [...versionMap.keys()];
+            for (const version of versionMap.keys()) {
                 const pass =
                     packageName in ignore &&
                     (ignore[packageName].includes('*') || ignore[packageName].includes(version));
@@ -179,44 +133,66 @@ export default createUnplugin<Options | undefined>((options) => {
         }
         if (issuePackagesMap.size === 0) return;
 
+        // join output messages
         const coloredDuplicatedPackageNames = [...issuePackagesMap.keys()]
             .map((name) => c.magenta(name))
             .join(', ');
         const outputMessages = [
-            `multiple versions of ${coloredDuplicatedPackageNames} is bundled!`,
+            `packages ${coloredDuplicatedPackageNames} is bundled multiple times!`,
         ];
         const promises = [...issuePackagesMap.keys()].map(async (duplicatedPackage) => {
             const warningMessagesOfPackage: string[] = [];
             let longestVersionLength = Number.NEGATIVE_INFINITY;
-            const sortedVersions = issuePackagesMap.get(duplicatedPackage)!;
-            sortedVersions.forEach((v) => {
+            const versions = issuePackagesMap.get(duplicatedPackage)!;
+            versions.forEach((v) => {
                 if (v.length > longestVersionLength) {
                     longestVersionLength = v.length;
                 }
             });
 
             let totalSize = 0;
-            const _promises = sortedVersions.map(async (version) => {
-                const importers = Array.from(
-                    packageToVersionsMap.get(duplicatedPackage)!.get(version)!,
-                );
-                const colorizedVersion = c.bold(
-                    c.yellow(version.padEnd(longestVersionLength, ' ')),
-                );
-                const colorizedImporters = importers
-                    .filter((importer) => importer !== `${duplicatedPackage}@${version}`)
-                    .map((name) => c.green(name))
-                    .join(', ');
+            const _promises = versions.map(async (version) => {
+                const directoryMap = packagesInfo.get(duplicatedPackage)!.get(version)!;
+
+                let versionAndSize = c.bold(c.yellow(version.padEnd(longestVersionLength, ' ')));
                 if (showPkgSize) {
                     const pkgSize = await getPkgSize(duplicatedPackage, version);
-                    totalSize += pkgSize;
-                    // prettier-ignore
-                    return `    - ${colorizedVersion}${colorizeSize(pkgSize)} imported by ${colorizedImporters}`;
+                    totalSize += pkgSize * directoryMap.size;
+                    versionAndSize += colorizeSize(pkgSize);
+                }
+
+                const getColorizedImporters = (importers: string[]) => {
+                    return (
+                        importers
+                            // ignore self import
+                            .filter((importer) => importer !== `${duplicatedPackage}@${version}`)
+                            .map((name) => c.green(name))
+                            .join(', ')
+                    );
+                };
+
+                if (directoryMap.size === 1) {
+                    const formattedImporters = getColorizedImporters(
+                        Array.from([...directoryMap.values()][0]),
+                    );
+                    return `    - ${versionAndSize} imported by ${formattedImporters}`;
                 } else {
-                    return `    - ${colorizedVersion} imported by ${colorizedImporters}`;
+                    const directories = [...directoryMap.keys()];
+                    const directoriesAndImporters = await Promise.all(
+                        directories.map(async (directory) => {
+                            const formattedDirectory = c.bold(
+                                c.cyan(await relativeToWorkspace(directory)),
+                            );
+                            const formattedImporters = getColorizedImporters([
+                                ...directoryMap.get(directory)!,
+                            ]);
+                            return `      - ${formattedDirectory} imported by ${formattedImporters}`;
+                        }),
+                    );
+                    return [`    - ${versionAndSize}`, ...directoriesAndImporters];
                 }
             });
-            warningMessagesOfPackage.push(...(await Promise.all(_promises)));
+            warningMessagesOfPackage.push(...(await Promise.all(_promises)).flat());
             warningMessagesOfPackage.unshift(
                 `\n  ${c.magenta(duplicatedPackage)}${showPkgSize ? colorizeSize(totalSize) : ''}:`,
             );
@@ -229,7 +205,7 @@ export default createUnplugin<Options | undefined>((options) => {
             consola.warn(outputMessages.join('\n'));
         } else {
             if (customErrorMessage) {
-                console.error(customErrorMessage(packageToVersionsMap));
+                console.error(customErrorMessage(packagesInfo));
             } else {
                 consola.error(outputMessages.join('\n'));
                 consola.info(

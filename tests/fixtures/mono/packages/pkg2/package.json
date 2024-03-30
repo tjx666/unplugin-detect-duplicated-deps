@@ -4,7 +4,7 @@
     "dependencies": {
         "@pixi/utils": "7.0.0",
         "axios": "^0.27.2",
-        "vue": "^2.7.16",
+        "vue": "2.7.16",
         "@yutengjing/foo": "1.0.3"
     }
 }

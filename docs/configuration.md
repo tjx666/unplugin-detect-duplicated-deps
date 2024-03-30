@@ -7,6 +7,41 @@ You can use the `jsdoc` to check option `description` and `default value`.
 :::
 
 ````ts
+/**
+ * ```plaintext
+ * {
+ *   'axios' => Map(2) {
+ *     '1.4.0' => Map(1) {
+ *       'node_modules/.pnpm/axios@1.4.0/node_modules/axios' => Set(1) ['tests/fixtures/mono/packages/pkg2/index.js']
+ *     },
+ *     '0.27.2' => Map(1) {
+ *       'node_modules/.pnpm/axios@0.27.2/node_modules/axios' => Set(1) ['tests/fixtures/mono/packages/pkg1/index.js']
+ *     }
+ *   },
+ *   '@yutengjing/foo' => Map(1) {
+ *     '1.0.3' => Map(2) {
+ *       'node_modules/.pnpm/@yutengjing+foo@1.0.3_vue@2.6.14/node_modules/@yutengjing/foo' => Set(1) ['tests/fixtures/mono/packages/pkg1/index.js'],
+ *       'node_modules/.pnpm/@yutengjing+foo@1.0.3_vue@2.7.16/node_modules/@yutengjing/foo' => Set(1) ['tests/fixtures/mono/packages/pkg2/index.js']
+ *     }
+ *   }
+ * }
+ * ```
+ */
+export type PackagesInfo = Map<
+  // pkg name
+  string,
+  Map<
+    // pkg version
+    string,
+    Map<
+      // pkg directory
+      string,
+      // importers
+      Set<string>
+    >
+  >
+>;
+
 export interface Options {
   /**
    * Config the duplicated dependencies which will be ignored, you can pass `*` as version to ignore all versions
@@ -44,24 +79,7 @@ export interface Options {
 
   /**
    * Custom the error message when exists duplicated deps
-   *
-   * @example
-   *
-   * ```txt
-   * packageToVersionsMap structure:
-   *
-   * Map(2) {
-   *     '@pixi/utils' => Map(2) {
-   *       '7.0.0' => Set(1) { 'tests/fixtures/mono/packages/pkg2/index.js' },
-   *       '7.2.4' => Set(1) { 'tests/fixtures/mono/packages/pkg1/index.js' }
-   *     },
-   *     'axios' => Map(2) {
-   *       '0.27.2' => Set(1) { 'tests/fixtures/mono/packages/pkg2/index.js' },
-   *       '1.4.0' => Set(1) { 'tests/fixtures/mono/packages/pkg1/index.js' }
-   *     }
-   * }
-   * ```
    */
-  customErrorMessage?: (packageToVersionsMap: Map<string, Map<string, Set<string>>>) => string;
+  customErrorMessage?: (packageToVersionsMap: PackagesInfo) => string;
 }
 ````

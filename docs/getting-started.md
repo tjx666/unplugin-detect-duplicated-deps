@@ -2,20 +2,18 @@
 
 ## Installation
 
+:::code-group
+
 ```sh [pnpm]
 pnpm -D add unplugin-detect-duplicated-deps
 ```
 
-If you are using Yarn, NPM or Bun
-
-:::code-group
+```sh [npm]
+npm add -D unplugin-detect-duplicated-deps
+```
 
 ```sh [yarn]
 yarn add -D unplugin-detect-duplicated-deps
-```
-
-```sh [npm]
-npm add -D unplugin-detect-duplicated-deps
 ```
 
 ```sh [bun]

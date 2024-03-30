@@ -42,10 +42,9 @@ test('rollup esm', async () => {
 test('webpack', async () => {
     const result = await exec('webpack');
     const stderrPath = resolve(testCwd, 'stderr-webpack.txt');
-    // await fs.writeFile(resolve(testCwd, 'stdout.txt'), result.stdout, 'utf8');
-    await fs.writeFile(stderrPath, result.stderr, 'utf8');
+    // await fs.writeFile(stderrPath, result.stderr, 'utf8');
 
-    // expect(result.stdout).toBe(stdout);
+    expect(result.stdout).toBe(stdout);
     expect(result.stderr).toBe(await fs.readFile(stderrPath, 'utf8'));
 });
 
@@ -53,5 +52,7 @@ test('no pkg size', async () => {
     const result = await exec('vite build -l error -c vite.config.disable-show-pkg-size.mts');
 
     expect(result.stdout).toBe(stdout);
-    expect(result.stderr).toBe(await fs.readFile(resolve(testCwd, 'no-pkg-size.txt'), 'utf8'));
+    const stderrPath = resolve(testCwd, 'no-pkg-size.txt');
+    // await fs.writeFile(stderrPath, result.stderr, 'utf8');
+    expect(result.stderr).toBe(await fs.readFile(stderrPath, 'utf8'));
 });
