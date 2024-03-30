@@ -1,3 +1,21 @@
+## v2.0.0 (2024-03-30)
+
+### 🚀 Features
+
+- Support display optimize size ([eefa2d0](https://github.com/tjx666/unplugin-detect-duplicated-deps/commit/eefa2d0))
+
+### 🐞 Bug Fixes
+
+- Can't recognize one package same version but different directory ([888bc54](https://github.com/tjx666/unplugin-detect-duplicated-deps/commit/888bc54))
+- Output will be dim in vite ([197e00e](https://github.com/tjx666/unplugin-detect-duplicated-deps/commit/197e00e))
+- Forget normalize pkg directory on windows ([1caccf2](https://github.com/tjx666/unplugin-detect-duplicated-deps/commit/1caccf2))
+
+### ❤️ Contributors
+
+- YuTengjing ([@tjx666](http://github.com/tjx666))
+
+[View changes on GitHub](https://github.com/tjx666/unplugin-detect-duplicated-deps/compare/v1.1.1...v2.0.0 (2024-03-30))
+
 ## v1.1.1 (2024-03-22)
 
 No significant changes
