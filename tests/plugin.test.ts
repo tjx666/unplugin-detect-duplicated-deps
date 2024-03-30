@@ -17,9 +17,13 @@ const exec = async (command: string) => {
             NO_COLOR: 'true',
         },
     });
+
+    const formatOutput = (str: string) =>
+        // eslint-disable-next-line unicorn/escape-case
+        str.replaceAll('\r?\n?', '\n').replaceAll('\u001b[0m', '');
     return {
-        stderr: result.stderr.replaceAll('\r?\n?', '\n'),
-        stdout: result.stdout.replaceAll('\r?\n?', '\n'),
+        stderr: formatOutput(result.stderr),
+        stdout: formatOutput(result.stdout),
     };
 };
 

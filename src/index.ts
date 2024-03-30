@@ -18,6 +18,8 @@ import {
 export default createUnplugin<Options | undefined>((options) => {
     const name = 'unplugin-detect-duplicated-deps';
 
+    let isVite = false;
+
     const {
         ignore = {},
         showPkgSize = true,
@@ -137,8 +139,11 @@ export default createUnplugin<Options | undefined>((options) => {
         const coloredDuplicatedPackageNames = [...issuePackagesMap.keys()]
             .map((name) => c.magenta(name))
             .join(', ');
+        // output will be dim in vite
+        // eslint-disable-next-line unicorn/escape-case, unicorn/no-hex-escape
+        const resetTerminalDim = isVite ? '\x1b[0m' : '';
         const outputMessages = [
-            `packages ${coloredDuplicatedPackageNames} is bundled multiple times!`,
+            `${resetTerminalDim}packages ${coloredDuplicatedPackageNames} is bundled multiple times!`,
         ];
         const promises = [...issuePackagesMap.keys()].map(async (duplicatedPackage) => {
             const warningMessagesOfPackage: string[] = [];
@@ -233,6 +238,9 @@ export default createUnplugin<Options | undefined>((options) => {
         buildEnd,
         vite: {
             enforce: 'pre',
+            config() {
+                isVite = true;
+            },
             resolveId,
         },
         rollup: {
